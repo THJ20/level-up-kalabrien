@@ -9,7 +9,7 @@ import {
 	type ServiceContext
 } from './context';
 import { openDatabase } from './db/client';
-import { hunters, settings } from './db/schema';
+import { hunters, questSets, settings } from './db/schema';
 
 export class FakeClock implements Clock {
 	private current: number;
@@ -61,6 +61,23 @@ export interface TestHunterOptions {
 	registeredOn?: LocalDate;
 	color?: string;
 	active?: boolean;
+}
+
+/** Trägt eine erfüllte Daily Quest direkt in die Datenbank ein (ohne Pipeline). */
+export function seedFullDay(ctx: ServiceContext, hunterId: string, date: LocalDate): void {
+	ctx.db
+		.insert(questSets)
+		.values(
+			(['pushups', 'squats', 'situps'] as const).map((exercise) => ({
+				id: crypto.randomUUID(),
+				hunterId,
+				date,
+				exercise,
+				reps: 100,
+				recordedAt: ctx.clock.now()
+			}))
+		)
+		.run();
 }
 
 /** Legt einen Hunter direkt an (ohne Passwort-Hashing) und liefert seine ID. */
