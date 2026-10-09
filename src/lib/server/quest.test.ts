@@ -93,6 +93,7 @@ describe('Krankmeldung', () => {
 		expect(sickEvents[0].payload).toEqual({ date: '2026-10-10', backfilled: true });
 
 		withdrawSick(ctx, tobias, '2026-10-10');
+		ctx.clock.advance(1000);
 		reportSick(ctx, tobias, '2026-10-11');
 		expect(listFeed(ctx, tobias).filter((item) => item.type === 'sick').at(0)?.payload).toEqual({
 			date: '2026-10-11',

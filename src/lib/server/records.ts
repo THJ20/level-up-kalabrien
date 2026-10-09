@@ -1,5 +1,11 @@
 import { asc, eq } from 'drizzle-orm';
-import { buildTimeline, type DaySummary, type HunterRecords, type LocalDate } from '$lib/domain';
+import {
+	buildTimeline,
+	type BonusEntry,
+	type DaySummary,
+	type HunterRecords,
+	type LocalDate
+} from '$lib/domain';
 import { todayOf, type ServiceContext } from './context';
 import { bonusEntries, exercises, questSets, sickNotes } from './db/schema';
 import { getHunter, scoringStartOf } from './hunters';
@@ -25,7 +31,16 @@ export function loadHunterRecords(ctx: ServiceContext, hunterId: string): Hunter
 		.from(sickNotes)
 		.where(eq(sickNotes.hunterId, hunterId))
 		.all();
-	const bonus = ctx.db
+	return {
+		scoringStart: scoringStartOf(ctx, hunter),
+		sets,
+		sickNotes: sick,
+		bonusEntries: loadBonusEntries(ctx, hunterId)
+	};
+}
+
+export function loadBonusEntries(ctx: ServiceContext, hunterId: string): BonusEntry[] {
+	return ctx.db
 		.select({ entry: bonusEntries, isRunning: exercises.isRunning })
 		.from(bonusEntries)
 		.innerJoin(exercises, eq(bonusEntries.exerciseId, exercises.id))
@@ -39,7 +54,6 @@ export function loadHunterRecords(ctx: ServiceContext, hunterId: string): Hunter
 			isRunning,
 			recordedAt: entry.recordedAt
 		}));
-	return { scoringStart: scoringStartOf(ctx, hunter), sets, sickNotes: sick, bonusEntries: bonus };
 }
 
 export function hunterTimeline(
