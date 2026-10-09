@@ -3,6 +3,7 @@ import type { LocalDate } from '$lib/domain';
 import type { ServiceContext } from './context';
 import { hunters } from './db/schema';
 import { invalid, notFound, ServiceError } from './errors';
+import { getGoLiveDate } from './settings';
 
 export const AVATAR_COLORS = [
 	'#a47cff',
@@ -90,6 +91,85 @@ export function listActiveHunters(ctx: ServiceContext): HunterProfile[] {
 		.orderBy(asc(hunters.nameKey))
 		.all()
 		.map(toProfile);
+}
+
+export interface HunterSettings {
+	pushEnabled: boolean;
+	reminderEnabled: boolean;
+	reminderTime: string;
+	votePushEnabled: boolean;
+	soundEnabled: boolean;
+}
+
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function requireRow(ctx: ServiceContext, id: string): HunterRow {
+	const row = findHunterRow(ctx, id);
+	if (!row) throw notFound('Diesen Hunter gibt es nicht.');
+	return row;
+}
+
+export function getSettings(ctx: ServiceContext, hunterId: string): HunterSettings {
+	const row = requireRow(ctx, hunterId);
+	return {
+		pushEnabled: row.pushEnabled,
+		reminderEnabled: row.reminderEnabled,
+		reminderTime: row.reminderTime,
+		votePushEnabled: row.votePushEnabled,
+		soundEnabled: row.soundEnabled
+	};
+}
+
+export function updateSettings(
+	ctx: ServiceContext,
+	hunterId: string,
+	patch: Partial<HunterSettings>
+): HunterSettings {
+	requireRow(ctx, hunterId);
+	if (patch.reminderTime !== undefined && !TIME_PATTERN.test(patch.reminderTime)) {
+		throw invalid('Die Uhrzeit muss im Format HH:MM sein.');
+	}
+	const changes: Partial<HunterSettings> = {};
+	for (const key of [
+		'pushEnabled',
+		'reminderEnabled',
+		'reminderTime',
+		'votePushEnabled',
+		'soundEnabled'
+	] as const) {
+		if (patch[key] !== undefined) Object.assign(changes, { [key]: patch[key] });
+	}
+	if (Object.keys(changes).length > 0) {
+		ctx.db.update(hunters).set(changes).where(eq(hunters.id, hunterId)).run();
+	}
+	return getSettings(ctx, hunterId);
+}
+
+export function updateProfile(
+	ctx: ServiceContext,
+	hunterId: string,
+	patch: { name?: string; color?: string }
+): HunterProfile {
+	requireRow(ctx, hunterId);
+	const changes: Partial<typeof hunters.$inferInsert> = {};
+	if (patch.name !== undefined) {
+		const name = validateHunterName(patch.name);
+		assertNameAvailable(ctx, name, hunterId);
+		changes.name = name;
+		changes.nameKey = name.toLowerCase();
+	}
+	if (patch.color !== undefined) changes.color = validateColor(patch.color);
+	if (Object.keys(changes).length > 0) {
+		ctx.db.update(hunters).set(changes).where(eq(hunters.id, hunterId)).run();
+		ctx.bus.publish(['hunters', 'board', 'feed']);
+	}
+	return getHunter(ctx, hunterId);
+}
+
+/** Erster gewerteter Tag eines Hunters: das spätere Datum aus Go-live und Registrierung. */
+export function scoringStartOf(ctx: ServiceContext, hunter: { registeredOn: LocalDate }): LocalDate {
+	const goLive = getGoLiveDate(ctx);
+	return hunter.registeredOn > goLive ? hunter.registeredOn : goLive;
 }
 
 export function assertNameAvailable(ctx: ServiceContext, name: string, exceptId?: string): void {
