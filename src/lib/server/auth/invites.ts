@@ -64,6 +64,15 @@ function findUsableInvite(ctx: ServiceContext, token: string) {
 	return invite;
 }
 
+/** Zeigt der Registrierungsseite, ob ein Link gültig ist und welche Rolle er vergibt. */
+export function inspectInvite(ctx: ServiceContext, token: string): { valid: boolean; role: HunterRole | null } {
+	try {
+		return { valid: true, role: findUsableInvite(ctx, token).role };
+	} catch {
+		return { valid: false, role: null };
+	}
+}
+
 export async function redeemInvite(
 	ctx: ServiceContext,
 	token: string,
