@@ -1,4 +1,4 @@
-import { RANKS, fulfilledDays, levelProgress, type DaySummary } from '$lib/domain';
+import { RANKS, fulfilledDays, levelProgress, type DaySummary } from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { syncBadges } from './badges';
 import { appendEvent } from './feed';

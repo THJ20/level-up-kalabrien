@@ -2072,7 +2072,7 @@ git commit -m "feat(domain): Abgleich verpasster Tage mit Nachtrag und Krankmeld
 
 **Interfaces:**
 - Consumes: alle Module aus Task 2 bis 10
-- Produces: `$lib/domain` als einziger Importpfad für Plan 2 und 3 (Re-Export aller öffentlichen Typen und Funktionen; `test-helpers.ts` wird nicht exportiert)
+- Produces: `#lib/domain/index.ts` als einziger Importpfad für Plan 2 und 3 (Re-Export aller öffentlichen Typen und Funktionen; `test-helpers.ts` wird nicht exportiert)
 
 - [ ] **Step 1: Failing Test schreiben**
 
@@ -2133,7 +2133,7 @@ export * from './reconcile';
 ```markdown
 # Domänenmodul
 
-Alle Spielregeln von Level Up · Kalabrien als reine Funktionen. Keine Datenbank, kein SvelteKit, keine aktuelle Uhrzeit: „heute“ und „jetzt“ werden immer übergeben. Importiert wird ausschließlich über `$lib/domain`.
+Alle Spielregeln von Level Up · Kalabrien als reine Funktionen. Keine Datenbank, kein SvelteKit, keine aktuelle Uhrzeit: „heute“ und „jetzt“ werden immer übergeben. Importiert wird ausschließlich über `#lib/domain/index.ts`.
 
 | Datei | Inhalt |
 |---|---|

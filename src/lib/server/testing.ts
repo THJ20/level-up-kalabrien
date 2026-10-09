@@ -1,4 +1,4 @@
-import { CHALLENGE_START, localDateOf, type LocalDate } from '$lib/domain';
+import { CHALLENGE_START, localDateOf, type LocalDate } from '#lib/domain/index.ts';
 import type { Clock } from './clock';
 import {
 	createChangeBus,

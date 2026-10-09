@@ -5,7 +5,7 @@ import {
 	type DaySummary,
 	type HunterRecords,
 	type LocalDate
-} from '$lib/domain';
+} from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
 import { bonusEntries, exercises, questSets, sickNotes } from './db/schema';
 import { getHunter, scoringStartOf } from './hunters';

@@ -8,7 +8,7 @@ import {
 	timeBonusPoints,
 	type Effort,
 	type LocalDate
-} from '$lib/domain';
+} from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { bonusEntries, exercises, hunters } from './db/schema';
 import { forbidden, invalid, notFound, ServiceError } from './errors';

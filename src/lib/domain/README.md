@@ -1,6 +1,6 @@
 # Domänenmodul
 
-Alle Spielregeln von Level Up · Kalabrien als reine Funktionen. Keine Datenbank, kein SvelteKit, keine aktuelle Uhrzeit: „heute“ und „jetzt“ werden immer übergeben. Importiert wird ausschließlich über `$lib/domain`.
+Alle Spielregeln von Level Up · Kalabrien als reine Funktionen. Keine Datenbank, kein SvelteKit, keine aktuelle Uhrzeit: „heute“ und „jetzt“ werden immer übergeben. Importiert wird ausschließlich über `#lib/domain/index.ts`.
 
 | Datei | Inhalt |
 |---|---|

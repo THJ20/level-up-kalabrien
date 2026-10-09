@@ -1,5 +1,5 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
-import type { LocalDate } from '$lib/domain';
+import type { LocalDate } from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { hunters } from './db/schema';
 import { invalid, notFound, ServiceError } from './errors';

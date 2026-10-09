@@ -7,7 +7,7 @@ import {
 	type Effort,
 	type ExerciseTotals,
 	type LocalDate
-} from '$lib/domain';
+} from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { feedEvents, hunters, reactions } from './db/schema';
 import { invalid, notFound } from './errors';

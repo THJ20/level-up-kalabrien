@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { isLocalDate, type LocalDate } from '$lib/domain';
+import { isLocalDate, type LocalDate } from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
 import { settings } from './db/schema';
 import { invalid } from './errors';

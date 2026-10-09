@@ -6,7 +6,7 @@ import {
 	type DaySummary,
 	type LiftReason,
 	type LocalDate
-} from '$lib/domain';
+} from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { ballots, hunters, missedDays, penalties, verdicts, voteVoters, votes } from './db/schema';
 import { forbidden, invalid, ServiceError } from './errors';
@@ -363,8 +363,8 @@ export function listVerdicts(ctx: ServiceContext, options: { hunterId?: string }
 
 // ---------- Erinnerungen und Deaktivierung ----------
 
-/** Stimmberechtigte ohne Stimme in offenen Abstimmungen, sofern sie Abstimmungs-Push erlauben. */
-export function pendingVoteReminders(ctx: ServiceContext): { hunterId: string; voteIds: string[] }[] {
+/** Offene Abstimmungen je Stimmberechtigtem, in denen er noch nicht abgestimmt hat. */
+function awaitingBallots(ctx: ServiceContext): Map<string, string[]> {
 	const openVotes = ctx.db.select({ id: votes.id }).from(votes).where(eq(votes.status, 'open')).all();
 	const pending = new Map<string, string[]>();
 	for (const vote of openVotes) {
@@ -374,6 +374,16 @@ export function pendingVoteReminders(ctx: ServiceContext): { hunterId: string; v
 			pending.set(voterId, [...(pending.get(voterId) ?? []), vote.id]);
 		}
 	}
+	return pending;
+}
+
+export function openVotesAwaiting(ctx: ServiceContext, hunterId: string): string[] {
+	return awaitingBallots(ctx).get(hunterId) ?? [];
+}
+
+/** Stimmberechtigte ohne Stimme in offenen Abstimmungen, sofern sie Abstimmungs-Push erlauben. */
+export function pendingVoteReminders(ctx: ServiceContext): { hunterId: string; voteIds: string[] }[] {
+	const pending = awaitingBallots(ctx);
 	if (pending.size === 0) return [];
 	const allowed = new Set(
 		ctx.db

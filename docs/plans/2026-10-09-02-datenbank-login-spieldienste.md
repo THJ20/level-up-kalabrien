@@ -4,7 +4,7 @@
 
 **Goal:** Alle serverseitigen Daten und Spieldienste der Spezifikation, getestet gegen eine SQLite-Datenbank im Speicher.
 
-**Architecture:** Alles liegt unter `src/lib/server/`. Die Dienste sind synchrone Funktionen mit einem `ServiceContext` (Datenbank, Uhr, Benachrichtiger, Änderungsbus, Zufall), damit Tests Uhrzeit und Nebenwirkungen kontrollieren. Spielregeln kommen ausschließlich aus `$lib/domain`. Jede Änderung an Sätzen, Krankmeldungen oder Bonus-Einträgen läuft durch eine Pipeline, die Feed-Ereignisse, verpasste Tage, Abstimmungen und Badges nachzieht. HTTP, Push-Versand, Scheduler und SSE folgen in Plan 3.
+**Architecture:** Alles liegt unter `src/lib/server/`. Die Dienste sind synchrone Funktionen mit einem `ServiceContext` (Datenbank, Uhr, Benachrichtiger, Änderungsbus, Zufall), damit Tests Uhrzeit und Nebenwirkungen kontrollieren. Spielregeln kommen ausschließlich aus `#lib/domain/index.ts`. Jede Änderung an Sätzen, Krankmeldungen oder Bonus-Einträgen läuft durch eine Pipeline, die Feed-Ereignisse, verpasste Tage, Abstimmungen und Badges nachzieht. HTTP, Push-Versand, Scheduler und SSE folgen in Plan 3.
 
 **Tech Stack:** better-sqlite3 13, drizzle-orm 0.45 (Abfragen), drizzle-kit 0.31 (Migrationen erzeugen), eingebetteter Migrations-Runner über `import.meta.glob`, @node-rs/argon2 (Passwörter), node:crypto (Tokens), Vitest.
 
@@ -13,8 +13,8 @@
 ## Global Constraints
 
 - Alle Global Constraints aus Plan 1 gelten weiter (Zeitzone Europe/Berlin, Challenge 09.10.2026 bis 28.04.2027, Formeln, Commit-Trailer, PowerShell, LF).
-- Spielregeln nur über `$lib/domain`, keine zweite Implementierung von Tagesstatus, Level, BP oder Badges.
-- SvelteKit 3 kennt `$lib` nicht mehr von selbst. Der Alias ist in `vite.config.ts` gesetzt (`alias: { $lib: 'src/lib' }`), damit Vite und TypeScript ihn auflösen.
+- Spielregeln nur über `#lib/domain/index.ts`, keine zweite Implementierung von Tagesstatus, Level, BP oder Badges.
+- SvelteKit 3 kennt `$lib` nicht mehr. Importe aus `src/lib` laufen über Subpath-Imports aus der `package.json` (`"#lib/*": "./src/lib/*"`) mit Dateiendung, z. B. `#lib/domain/index.ts`.
 - Kein Dienst ruft `new Date()` ohne Argument auf, die Zeit kommt aus `ctx.clock.now()`.
 - IDs sind `crypto.randomUUID()`. Kalendertage werden als Text `JJJJ-MM-TT` gespeichert, Zeitpunkte als Millisekunden (`integer` mit `mode: 'timestamp_ms'`).
 - Fehler werfen `ServiceError` mit Code `invalid_input`, `unauthorized`, `forbidden`, `not_found`, `conflict` oder `locked`. Meldungstexte sind deutsch.
@@ -205,7 +205,7 @@
 - `CatalogExercise { id; name; kind: 'time' | 'reps'; secondsPerRep: number | null; tracksDistance; isRunning; createdBy: string | null; archived }`
 - `listExercises(ctx, { includeArchived? })`, `createExercise(ctx, hunterId, input)`, `updateExercise(ctx, hunterId, id, patch)`, `archiveExercise(ctx, hunterId, id)`. Ändern nur durch Ersteller, Startkatalog nur durch Admin. Name 2 bis 40 Zeichen, eindeutig. Wiederholungs-Übungen brauchen Sekunden pro Wiederholung (2 bis 10).
 - `BonusEntryView { id; hunterId; date; exercise: { id; name; kind }; minutes; reps; effort; distanceKm; bonusPoints; recordedAt }`
-- `addBonusEntry(ctx, hunterId, { exerciseId, date, minutes?, reps?, effort, distanceKm?, clientId? })`, `updateBonusEntry(ctx, hunterId, id, patch)`, `deleteBonusEntry(ctx, hunterId, id)`, `listBonusEntries(ctx, hunterId, date)`. BP werden beim Speichern mit den Formeln aus `$lib/domain` berechnet und gespeichert. Läuft über die Pipeline und `recordActivity`.
+- `addBonusEntry(ctx, hunterId, { exerciseId, date, minutes?, reps?, effort, distanceKm?, clientId? })`, `updateBonusEntry(ctx, hunterId, id, patch)`, `deleteBonusEntry(ctx, hunterId, id)`, `listBonusEntries(ctx, hunterId, date)`. BP werden beim Speichern mit den Formeln aus `#lib/domain/index.ts` berechnet und gespeichert. Läuft über die Pipeline und `recordActivity`.
 
 **Testfälle:**
 - 30 Minuten Laufen moderat ergeben 150 BP, 20 Klimmzüge am Limit ergeben 12 BP.

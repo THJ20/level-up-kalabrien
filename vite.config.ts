@@ -5,10 +5,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [
 		sveltekit({
-			adapter: adapter(),
-			alias: {
-				$lib: 'src/lib'
-			}
+			adapter: adapter()
 		})
 	],
 	test: {

@@ -6,7 +6,7 @@ import {
 	isValidSetReps,
 	type Exercise,
 	type LocalDate
-} from '$lib/domain';
+} from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
 import { questSets, sickNotes } from './db/schema';
 import { forbidden, invalid, notFound } from './errors';

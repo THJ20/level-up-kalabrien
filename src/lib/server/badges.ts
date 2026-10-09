@@ -1,5 +1,5 @@
 import { and, asc, count, eq } from 'drizzle-orm';
-import { earnedBadges, type BadgeId, type DaySummary } from '$lib/domain';
+import { earnedBadges, type BadgeId, type DaySummary } from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { ballots, hunterBadges, verdicts, votes } from './db/schema';
 import { appendEvent } from './feed';

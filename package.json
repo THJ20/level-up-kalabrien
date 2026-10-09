@@ -6,6 +6,9 @@
 	"engines": {
 		"node": ">=24"
 	},
+	"imports": {
+		"#lib/*": "./src/lib/*"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",

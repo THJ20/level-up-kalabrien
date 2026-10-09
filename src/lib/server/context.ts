@@ -1,4 +1,4 @@
-import { localDateOf, type LocalDate } from '$lib/domain';
+import { localDateOf, type LocalDate } from '#lib/domain/index.ts';
 import type { Clock } from './clock';
 import type { AppDb } from './db/client';
 
