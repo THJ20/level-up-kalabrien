@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { createTestContext, insertHunter } from '../testing';
 import { hunters, settings } from '../db/schema';
 import { ensureGoLiveDate, getGoLiveDate } from '../settings';
+import { listFeed } from '../feed';
 import { hashPassword, validatePassword, verifyPassword } from './password';
 import { createInvite, ensureAdminInvite, redeemInvite } from './invites';
 import { createSession, invalidateSession, validateSession } from './sessions';
@@ -38,6 +39,7 @@ describe('Einladungen', () => {
 		const { hunter, session } = await redeemInvite(ctx, token, registration());
 		expect(hunter).toMatchObject({ name: 'Tobias', role: 'hunter', active: true, registeredOn: '2026-10-09' });
 		expect(validateSession(ctx, session.token)?.hunter.id).toBe(hunter.id);
+		expect(listFeed(ctx, hunter.id).map((item) => item.type)).toEqual(['joined']);
 	});
 
 	it('lässt sich nur einmal und nur 7 Tage lang einlösen', async () => {
