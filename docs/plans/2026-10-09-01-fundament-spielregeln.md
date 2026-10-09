@@ -48,7 +48,7 @@
 
 | Datei | Verantwortung |
 |---|---|
-| `package.json`, `svelte.config.js`, `vite.config.ts`, `tsconfig.json`, `.gitignore`, `.gitattributes`, `.npmrc` | Projektgerüst |
+| `package.json`, `vite.config.ts`, `tsconfig.json`, `.gitignore`, `.gitattributes`, `.npmrc` | Projektgerüst |
 | `src/app.html`, `src/app.d.ts`, `src/routes/+page.svelte` | Minimale SvelteKit-App |
 | `src/lib/domain/challenge.ts` | Kalender, Challenge-Daten, Umrechnung Zeitpunkt ↔ Berliner Kalendertag |
 | `src/lib/domain/quest.ts` | Pflichtübungen, Sätze, Summen, Quest erfüllt, Abschlusszeitpunkt |
@@ -69,7 +69,7 @@
 ### Task 1: Projektgerüst
 
 **Files:**
-- Create: `package.json`, `svelte.config.js`, `vite.config.ts`, `tsconfig.json`, `.gitignore`, `.gitattributes`, `.npmrc`, `src/app.html`, `src/app.d.ts`, `src/routes/+page.svelte`
+- Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `.gitignore`, `.gitattributes`, `.npmrc`, `src/app.html`, `src/app.d.ts`, `src/routes/+page.svelte`
 
 **Interfaces:**
 - Consumes: nichts
@@ -106,31 +106,21 @@ git switch -c feat/fundament-spielregeln
 
 - [ ] **Step 3: Konfigurationsdateien anlegen**
 
-`svelte.config.js`:
-
-```js
-import adapter from '@sveltejs/adapter-node';
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
-	preprocess: vitePreprocess(),
-	kit: {
-		adapter: adapter()
-	}
-};
-
-export default config;
-```
+Hinweis: Installiert wird SvelteKit 3 (mit Vite 8, Vitest 5, TypeScript 6). Seit SvelteKit 3 gibt es keine `svelte.config.js` mehr, die Konfiguration steht direkt im `sveltekit(...)`-Plugin, und `tsconfig.json` erweitert `$app/tsconfig`.
 
 `vite.config.ts`:
 
 ```ts
+import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [
+		sveltekit({
+			adapter: adapter()
+		})
+	],
 	test: {
 		include: ['src/**/*.test.ts'],
 		environment: 'node'
@@ -142,7 +132,9 @@ export default defineConfig({
 
 ```json
 {
-	"extends": "./.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
+	"include": ["src", "test", "*"],
+	"exclude": ["src/service-worker"],
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,
@@ -246,12 +238,12 @@ npm run build
 npx vitest run --passWithNoTests
 ```
 
-Expected: `svelte-check found 0 errors and 0 warnings`, Build endet mit `✔ done`, Vitest meldet `No test files found, exiting with code 0`.
+Expected: svelte-check meldet `0 ERRORS 0 WARNINGS`, Build endet mit `✔ done`, Vitest meldet `No test files found, exiting with code 0`.
 
 - [ ] **Step 7: Commit**
 
 ```powershell
-git add package.json package-lock.json svelte.config.js vite.config.ts tsconfig.json .gitignore .gitattributes .npmrc src
+git add package.json package-lock.json vite.config.ts tsconfig.json .gitignore .gitattributes .npmrc src
 git commit -m "chore: SvelteKit-Projektgerüst mit Vitest" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -2166,7 +2158,7 @@ npm run check
 npm run build
 ```
 
-Expected: Vitest meldet 10 Testdateien bestanden und 0 fehlgeschlagen. `svelte-check found 0 errors and 0 warnings`. Build endet mit `✔ done`.
+Expected: Vitest meldet 10 Testdateien bestanden und 0 fehlgeschlagen. svelte-check meldet `0 ERRORS 0 WARNINGS`. Build endet mit `✔ done`.
 
 - [ ] **Step 5: Commit**
 
