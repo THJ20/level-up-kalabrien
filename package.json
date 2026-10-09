@@ -19,11 +19,22 @@
 		"@sveltejs/adapter-node": "^6.0.0",
 		"@sveltejs/kit": "^3.0.1",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@types/better-sqlite3": "^9.6.0",
 		"@types/node": "^26.6.4",
+		"@types/web-push": "^3.6.4",
+		"drizzle-kit": "^0.31.11",
 		"svelte": "^5.57.2",
 		"svelte-check": "^4.7.6",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.4",
 		"vitest": "^5.0.3"
+	},
+	"dependencies": {
+		"@node-rs/argon2": "^2.2.2",
+		"better-sqlite3": "^13.0.3",
+		"croner": "^10.0.1",
+		"drizzle-orm": "^0.45.4",
+		"web-push": "^3.6.7",
+		"zod": "^4.6.5"
 	}
 }

@@ -14,6 +14,7 @@
 
 - Alle Global Constraints aus Plan 1 gelten weiter (Zeitzone Europe/Berlin, Challenge 09.10.2026 bis 28.04.2027, Formeln, Commit-Trailer, PowerShell, LF).
 - Spielregeln nur über `$lib/domain`, keine zweite Implementierung von Tagesstatus, Level, BP oder Badges.
+- SvelteKit 3 kennt `$lib` nicht mehr von selbst. Der Alias ist in `vite.config.ts` gesetzt (`alias: { $lib: 'src/lib' }`), damit Vite und TypeScript ihn auflösen.
 - Kein Dienst ruft `new Date()` ohne Argument auf, die Zeit kommt aus `ctx.clock.now()`.
 - IDs sind `crypto.randomUUID()`. Kalendertage werden als Text `JJJJ-MM-TT` gespeichert, Zeitpunkte als Millisekunden (`integer` mit `mode: 'timestamp_ms'`).
 - Fehler werfen `ServiceError` mit Code `invalid_input`, `unauthorized`, `forbidden`, `not_found`, `conflict` oder `locked`. Meldungstexte sind deutsch.
