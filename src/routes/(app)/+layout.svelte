@@ -105,6 +105,7 @@
 	.me {
 		display: inline-flex;
 		border-radius: 50%;
+		text-decoration: none;
 	}
 
 	.nav {

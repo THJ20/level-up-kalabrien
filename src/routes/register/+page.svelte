@@ -19,7 +19,7 @@
 		busy = true;
 		try {
 			await apiFetch('/api/auth/register', { body: { token: data.token, name, password, color } });
-			await goto('/', { invalidateAll: true });
+			await goto('/', { refreshAll: true });
 		} catch (caught) {
 			error = errorMessage(caught);
 		} finally {

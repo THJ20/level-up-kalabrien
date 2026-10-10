@@ -14,7 +14,7 @@
 		busy = true;
 		try {
 			await apiFetch('/api/auth/login', { body: { name, password } });
-			await goto('/', { invalidateAll: true });
+			await goto('/', { refreshAll: true });
 		} catch (caught) {
 			error = errorMessage(caught);
 		} finally {
