@@ -73,13 +73,15 @@ export function createApp(config: AppConfig, deps: AppDeps = {}): App {
 	};
 }
 
-let current: App | null = null;
+// Global abgelegt, damit Modul-Neuladungen im Dev-Server keine zweite Datenbankverbindung
+// und keinen zweiten Scheduler erzeugen.
+const holder = globalThis as typeof globalThis & { __levelUpApp?: App | null };
 
 export function getApp(): App {
-	current ??= createApp(loadConfig(process.env));
-	return current;
+	holder.__levelUpApp ??= createApp(loadConfig(process.env));
+	return holder.__levelUpApp;
 }
 
 export function setApp(app: App | null): void {
-	current = app;
+	holder.__levelUpApp = app;
 }
