@@ -2,8 +2,19 @@
 	let {
 		options,
 		value = $bindable(),
-		label
-	}: { options: { value: T; label: string }[]; value: T; label: string } = $props();
+		label,
+		onchange
+	}: {
+		options: { value: T; label: string }[];
+		value: T;
+		label: string;
+		onchange?: (value: T) => void;
+	} = $props();
+
+	function select(next: T) {
+		value = next;
+		onchange?.(next);
+	}
 </script>
 
 <div class="segmented" role="radiogroup" aria-label={label}>
@@ -13,7 +24,7 @@
 			role="radio"
 			aria-checked={value === option.value}
 			class:active={value === option.value}
-			onclick={() => (value = option.value)}
+			onclick={() => select(option.value)}
 		>
 			{option.label}
 		</button>
