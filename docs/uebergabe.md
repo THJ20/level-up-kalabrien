@@ -88,7 +88,7 @@ Stand 10.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
   - Playwright-Abläufe
   - Abnahme auf echtem iPhone und Android-Handy
   - Go-live mit `GO_LIVE_DATE`
-  - **Pflicht vor dem Go-live:** Das App-Icon, das Tobias später liefert, muss in den Push-Benachrichtigungen erscheinen wie bei normalen Apps. Dazu gehören das große Icon (`icon`), ein einfarbiges Status-Icon für Android (`badge`, weiße Silhouette auf transparent) und die Homescreen-Icons, die iOS für Benachrichtigungen nutzt. Auf iPhone und Android prüfen.
+  - **Pflicht vor dem Go-live:** Das App-Icon muss in den Push-Benachrichtigungen erscheinen wie bei normalen Apps. Stand 10.10.2026 ist das Logo von Tobias eingebaut (`assets/logo`, Icons per `scripts/cut-logo.mjs` und `scripts/generate-icons.mjs`). Der Service Worker nutzt `icon-192.png` als großes Icon und `badge-96.png` als einfarbiges Status-Icon für Android, iOS nimmt das Homescreen-Icon. Offen ist die Prüfung auf echtem iPhone und Android.
 - **Wartet auf Niklas**, denn die App soll auf seinem Server laufen. Folgende Fragen sind offen:
   1. Betriebssystem, Docker und Docker Compose
   2. Reverse Proxy für HTTPS

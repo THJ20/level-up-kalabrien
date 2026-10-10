@@ -1,49 +1,49 @@
-// Erzeugt die App-Icons aus einem SVG-Emblem (Sechseck mit zwei Aufwärts-Pfeilen).
+// Erzeugt die App-Icons aus dem Logo unter assets/logo (vorher mit scripts/cut-logo.mjs zuschneiden).
+// Das Status-Icon für Android-Benachrichtigungen ist eine vereinfachte Silhouette, weil das volle Logo bei 24 px verschwimmt.
 // Aufruf: node scripts/generate-icons.mjs
 import { mkdirSync } from 'node:fs';
 import sharp from 'sharp';
 
-function emblem({ scale = 1 } = {}) {
-	const content = `
-		<g transform="translate(256 256) scale(${scale}) translate(-256 -256)" filter="url(#glow)">
-			<polygon points="256,84 405,170 405,342 256,428 107,342 107,170" fill="rgba(60,25,120,0.35)" stroke="#a47cff" stroke-width="14" stroke-linejoin="round"/>
-			<path d="M170 318 L256 232 L342 318" fill="none" stroke="url(#arrow)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M170 248 L256 162 L342 248" fill="none" stroke="url(#arrow)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
-		</g>`;
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-		<defs>
-			<radialGradient id="bg" cx="50%" cy="38%" r="72%">
-				<stop offset="0" stop-color="#2c1260"/>
-				<stop offset="0.6" stop-color="#0d0720"/>
-				<stop offset="1" stop-color="#05030a"/>
-			</radialGradient>
-			<linearGradient id="arrow" x1="0" y1="1" x2="0" y2="0">
-				<stop offset="0" stop-color="#8b5cf6"/>
-				<stop offset="1" stop-color="#efe7ff"/>
-			</linearGradient>
-			<filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-				<feGaussianBlur stdDeviation="9" result="blur"/>
-				<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-			</filter>
-		</defs>
-		<rect width="512" height="512" fill="url(#bg)"/>
-		${content}
-	</svg>`;
-}
-
+const LOGO = 'assets/logo/logo-violet.png';
 const out = 'static/icons';
 mkdirSync(out, { recursive: true });
 
+/** Farbe der Logo-Ecke, damit Ränder beim Verkleinern nahtlos anschließen. */
+async function cornerColor() {
+	const { data } = await sharp(LOGO).extract({ left: 0, top: 0, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+	return { r: data[0], g: data[1], b: data[2] };
+}
+
+/** Logo auf `scale` der Kantenlänge verkleinert und mittig auf den Logo-Hintergrund gesetzt. */
+async function icon(size, scale, background) {
+	const inner = Math.round(size * scale);
+	const logo = await sharp(LOGO).resize(inner, inner).png().toBuffer();
+	const offset = Math.round((size - inner) / 2);
+	return sharp({ create: { width: size, height: size, channels: 3, background } })
+		.composite([{ input: logo, left: offset, top: offset }])
+		.png();
+}
+
+const BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+	<g fill="none" stroke="#fff" stroke-linecap="square" stroke-linejoin="miter">
+		<path d="M22 46 L48 20 L74 46" stroke-width="13"/>
+		<path d="M30 66 L48 48 L66 66" stroke-width="11"/>
+		<path d="M48 70 L48 86" stroke-width="7"/>
+	</g>
+</svg>`;
+
+const background = await cornerColor();
 const targets = [
 	{ file: 'icon-192.png', size: 192, scale: 1 },
 	{ file: 'icon-512.png', size: 512, scale: 1 },
-	{ file: 'icon-maskable-512.png', size: 512, scale: 0.78 },
+	{ file: 'icon-maskable-512.png', size: 512, scale: 0.74 },
 	{ file: 'apple-touch-icon.png', size: 180, scale: 0.9 },
-	{ file: 'favicon.png', size: 64, scale: 1.05 },
-	{ file: 'badge-96.png', size: 96, scale: 1.1 }
+	{ file: 'favicon.png', size: 64, scale: 1 }
 ];
-
 for (const { file, size, scale } of targets) {
-	await sharp(Buffer.from(emblem({ scale }))).resize(size, size).png().toFile(`${out}/${file}`);
+	await (await icon(size, scale, background)).toFile(`${out}/${file}`);
 	console.log(`${out}/${file}`);
 }
+
+await sharp(Buffer.from(BADGE_SVG)).resize(96, 96).png().toFile(`${out}/badge-96.png`);
+console.log(`${out}/badge-96.png`);
