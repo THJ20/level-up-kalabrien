@@ -10,6 +10,7 @@
 		type SystemMessage
 	} from '#lib/client/progress.ts';
 	import { readJson, writeJson } from '#lib/client/storage.ts';
+	import { offlineQueue } from '#lib/client/queue.svelte.ts';
 	import Avatar from '#lib/ui/Avatar.svelte';
 	import SystemOverlay from '#lib/ui/SystemOverlay.svelte';
 
@@ -64,6 +65,21 @@
 	}
 
 	onMount(() => {
+		const flush = async () => {
+			if ((await offlineQueue.flush()) > 0) await invalidate('app:data');
+		};
+		void offlineQueue.load().then(flush);
+		window.addEventListener('online', flush);
+		const retry = setInterval(() => {
+			if (offlineQueue.entries.length > 0) void flush();
+		}, 30_000);
+		return () => {
+			window.removeEventListener('online', flush);
+			clearInterval(retry);
+		};
+	});
+
+	onMount(() => {
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const refresh = () => {
 			clearTimeout(timer);
@@ -112,6 +128,19 @@
 	</nav>
 
 	<main class="content">
+		{#if offlineQueue.entries.length > 0}
+			<p class="offline" role="status">
+				Offline: {offlineQueue.entries.length}
+				{offlineQueue.entries.length === 1 ? 'Eintrag wartet' : 'Einträge warten'} und
+				{offlineQueue.entries.length === 1 ? 'wird' : 'werden'} gesendet, sobald wieder Netz da ist.
+			</p>
+		{/if}
+		{#if offlineQueue.rejected > 0}
+			<p class="offline rejected" role="alert">
+				{offlineQueue.rejected === 1 ? 'Ein Offline-Eintrag wurde' : `${offlineQueue.rejected} Offline-Einträge wurden`}
+				vom Server abgelehnt. Bitte prüf deine Einträge.
+			</p>
+		{/if}
 		{@render children()}
 	</main>
 </div>
@@ -213,6 +242,19 @@
 		font-weight: 700;
 		line-height: 18px;
 		text-align: center;
+	}
+
+	.offline {
+		margin-bottom: 14px;
+		padding: 10px 12px;
+		border: 1px solid rgba(245, 197, 66, 0.5);
+		background: rgba(245, 197, 66, 0.08);
+		font-size: 14px;
+	}
+
+	.offline.rejected {
+		border-color: rgba(255, 79, 123, 0.5);
+		background: var(--warn-soft);
 	}
 
 	.desktop-only {

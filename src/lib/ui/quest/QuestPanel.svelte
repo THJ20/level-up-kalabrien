@@ -12,6 +12,7 @@
 	import * as actions from '#lib/client/actions.ts';
 	import { errorMessage } from '#lib/client/api.ts';
 	import { countdown, dayLabel } from '#lib/client/format.ts';
+	import { offlineQueue } from '#lib/client/queue.svelte.ts';
 	import Panel from '../Panel.svelte';
 	import QuestRow from './QuestRow.svelte';
 	import SetList from './SetList.svelte';
@@ -44,10 +45,18 @@
 	});
 
 	const totals = $derived(day?.totals ?? emptyTotals());
+	const queuedSets = $derived(
+		offlineQueue.entries.filter((entry) => entry.kind === 'set' && entry.body?.date === date)
+	);
+	const queued = $derived.by(() => {
+		const sum = emptyTotals();
+		for (const entry of queuedSets) sum[entry.body?.exercise as Exercise] += Number(entry.body?.reps ?? 0);
+		return sum;
+	});
 	const status = $derived(day?.status ?? 'open');
 	const timeLeft = $derived(countdown(endOfDay(date).getTime() - now));
 
-	async function run(task: () => Promise<void>) {
+	async function run(task: () => Promise<unknown>) {
 		error = '';
 		try {
 			await task();
@@ -88,10 +97,19 @@
 
 	<div class="rows">
 		{#each EXERCISES as exercise (exercise)}
-			<QuestRow {exercise} total={totals[exercise] + pending[exercise]} onAdd={(reps) => add(exercise, reps)} />
+			<QuestRow
+				{exercise}
+				total={totals[exercise] + pending[exercise] + queued[exercise]}
+				onAdd={(reps) => add(exercise, reps)}
+			/>
 		{/each}
 	</div>
 
+	{#if queuedSets.length > 0}
+		<p class="queued">
+			{queuedSets.length === 1 ? '1 Satz wartet' : `${queuedSets.length} Sätze warten`} auf Netz und wird automatisch gesendet.
+		</p>
+	{/if}
 	{#if error}<p class="form-error" role="alert">{error}</p>{/if}
 
 	<div class="state">
@@ -205,6 +223,15 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
+	}
+
+	.queued {
+		margin-top: 12px;
+		padding: 8px 10px;
+		border-left: 3px solid var(--gold);
+		background: rgba(245, 197, 66, 0.08);
+		font-size: 14px;
+		color: var(--dim);
 	}
 
 	.state {
