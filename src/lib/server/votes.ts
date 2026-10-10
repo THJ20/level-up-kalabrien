@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, ne } from 'drizzle-orm';
 import {
 	eligibleVoters,
 	reconcileMissedDays,
@@ -359,6 +359,23 @@ export function listVerdicts(ctx: ServiceContext, options: { hunterId?: string }
 			status: verdict.status,
 			liftReason: verdict.liftReason
 		}));
+}
+
+/** Noch aktive verpasste Tage anderer Hunter aus den letzten Tagen, für die WARNING-Meldung. */
+export function recentMissedNotices(
+	ctx: ServiceContext,
+	viewerId: string,
+	days = 3
+): { id: string; hunterName: string; date: LocalDate }[] {
+	const since = new Date(ctx.clock.now().getTime() - days * 86_400_000);
+	return ctx.db
+		.select({ id: missedDays.id, date: missedDays.date, hunterName: hunters.name, createdAt: missedDays.createdAt })
+		.from(missedDays)
+		.innerJoin(hunters, eq(missedDays.hunterId, hunters.id))
+		.where(and(eq(missedDays.status, 'active'), ne(missedDays.hunterId, viewerId), gte(missedDays.createdAt, since)))
+		.orderBy(desc(missedDays.createdAt))
+		.all()
+		.map(({ id, date, hunterName }) => ({ id, date, hunterName }));
 }
 
 // ---------- Erinnerungen und Deaktivierung ----------

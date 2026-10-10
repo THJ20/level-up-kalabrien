@@ -12,7 +12,8 @@ import {
 	listVerdicts,
 	listVotes,
 	pendingVoteReminders,
-	proposePenalty
+	proposePenalty,
+	recentMissedNotices
 } from './votes';
 import { deactivateHunter } from './admin';
 
@@ -262,6 +263,23 @@ describe('Deaktivierung', () => {
 		const admin = insertHunter(ctx, 'Admin', { registeredOn: '2026-10-12', role: 'admin' });
 		deactivateHunter(ctx, admin, tobias);
 		expect(listVotes(ctx, niklas, { status: 'open' })).toEqual([]);
+	});
+});
+
+describe('Warnungen', () => {
+	it('liefern frische, noch aktive verpasste Tage anderer', () => {
+		const { ctx, tobias, niklas } = setup();
+		evaluateAllHunters(ctx);
+		expect(recentMissedNotices(ctx, niklas).map((notice) => notice.hunterName)).toEqual([
+			'Tobias',
+			'Tobias',
+			'Tobias'
+		]);
+		expect(recentMissedNotices(ctx, tobias)).toEqual([]);
+		completeDay(ctx, tobias, '2026-10-09');
+		expect(recentMissedNotices(ctx, niklas)).toHaveLength(2);
+		ctx.clock.advance(4 * 86_400_000);
+		expect(recentMissedNotices(ctx, niklas)).toEqual([]);
 	});
 });
 

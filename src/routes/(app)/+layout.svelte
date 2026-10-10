@@ -1,11 +1,40 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Activity, ChartColumn, Gavel, Swords, Trophy } from '@lucide/svelte';
+	import {
+		progressMessages,
+		warningMessages,
+		type ProgressSnapshot,
+		type SystemMessage
+	} from '#lib/client/progress.ts';
+	import { readJson, writeJson } from '#lib/client/storage.ts';
 	import Avatar from '#lib/ui/Avatar.svelte';
+	import SystemOverlay from '#lib/ui/SystemOverlay.svelte';
 
 	let { data, children } = $props();
+
+	let queue = $state<SystemMessage[]>([]);
+
+	$effect(() => {
+		const progressKey = `lu:progress:${data.me.id}`;
+		const seenKey = `lu:seen-warnings:${data.me.id}`;
+		const progress: ProgressSnapshot = data.progress;
+		const fresh = progressMessages(readJson<ProgressSnapshot>(progressKey), progress);
+		writeJson(progressKey, progress);
+
+		const seen = readJson<string[]>(seenKey) ?? [];
+		const warnings = warningMessages(data.recentMissed, new Set(seen));
+		writeJson(seenKey, [...seen, ...data.recentMissed.map((notice) => notice.id)].slice(-200));
+
+		const incoming = [...warnings, ...fresh];
+		if (incoming.length === 0) return;
+		untrack(() => {
+			const known = new Set(queue.map((message) => message.id));
+			queue = [...queue, ...incoming.filter((message) => !known.has(message.id))];
+		});
+	});
 
 	const nav = [
 		{ href: '/', label: 'Quest', icon: Swords },
@@ -72,6 +101,15 @@
 		{@render children()}
 	</main>
 </div>
+
+{#if queue.length > 0}
+	<SystemOverlay
+		message={queue[0]}
+		remaining={queue.length}
+		sound={data.settings.soundEnabled}
+		onDismiss={() => (queue = queue.slice(1))}
+	/>
+{/if}
 
 <style>
 	.shell {
