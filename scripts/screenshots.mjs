@@ -1,11 +1,11 @@
 // Macht Screenshots aller Seiten in Handy- und Desktop-Breite (lokale Entwicklung, Edge über Playwright).
-// Aufruf: node scripts/screenshots.mjs <Ausgabeordner> [Basis-URL]
+// Aufruf: node scripts/screenshots.mjs <Ausgabeordner> [Basis-URL] [Hunter-Name]
 import { mkdirSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
-const [outDir = 'screenshots', base = 'http://localhost:5173'] = process.argv.slice(2);
+const [outDir = 'screenshots', base = 'http://localhost:5173', user = 'Tobias'] = process.argv.slice(2);
 const PASSWORD = 'dev-passwort-123';
-const pages = ['/', '/statistik', '/rangliste', '/feed', '/strafen', '/profil'];
+const pages = ['/', '/plan', '/statistik', '/rangliste', '/erfolge', '/feed', '/strafen', '/profil'];
 mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch({ channel: 'msedge' });
@@ -26,7 +26,7 @@ for (const viewport of [
 	});
 	page.on('pageerror', (error) => problems.push(`${viewport.name} ${page.url()}: ${error.message}`));
 	const login = await page.request.post(`${base}/api/auth/login`, {
-		data: { name: 'Tobias', password: PASSWORD },
+		data: { name: user, password: PASSWORD },
 		headers: { origin: base }
 	});
 	if (!login.ok()) throw new Error(`Login fehlgeschlagen: ${login.status()}`);

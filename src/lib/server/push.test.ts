@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { join } from 'node:path';
-import { createTestContext, insertHunter, seedFullDay } from './testing';
+import { FakeClock, createTestContext, insertHunter, seedFullDay } from './testing';
+import { simulatedClock } from './clock';
 import { loadConfig } from './config';
 import { ensureVapidKeys } from './vapid';
 import { PushNotifier, removePushSubscription, savePushSubscription, type PushTransport } from './push';
@@ -33,7 +34,8 @@ describe('Konfiguration', () => {
 			avatarDir: join('data', 'avatars'),
 			goLiveDate: null,
 			origin: null,
-			vapidSubject: 'mailto:level-up@example.invalid'
+			vapidSubject: 'mailto:level-up@example.invalid',
+			simulatedNow: null
 		});
 		expect(loadConfig({ ORIGIN: 'https://levelup.example.de/', GO_LIVE_DATE: '2026-10-17' })).toMatchObject({
 			origin: 'https://levelup.example.de',
@@ -41,6 +43,14 @@ describe('Konfiguration', () => {
 			goLiveDate: '2026-10-17'
 		});
 		expect(() => loadConfig({ GO_LIVE_DATE: '14.10.2026' })).toThrow(/GO_LIVE_DATE/);
+		expect(loadConfig({ SIMULATED_NOW: '2026-10-20T18:00:00+02:00' }).simulatedNow?.toISOString()).toBe(
+			'2026-10-20T16:00:00.000Z'
+		);
+		expect(() => loadConfig({ SIMULATED_NOW: 'morgen' })).toThrow(/SIMULATED_NOW/);
+		const real = new FakeClock('2026-10-11T10:00:00Z');
+		const clock = simulatedClock(new Date('2026-10-20T16:00:00Z'), real);
+		real.advance(60_000);
+		expect(clock.now().toISOString()).toBe('2026-10-20T16:01:00.000Z');
 	});
 });
 

@@ -14,7 +14,9 @@
 			case 'unscored':
 				return { label: 'OHNE WERTUNG', tone: 'dim' };
 			case 'open':
-				return { label: `${progress ?? 0} / 300`, tone: progress ? 'mid' : 'warn' };
+				return { label: `${Math.round((progress ?? 0) * 100)} %`, tone: progress ? 'mid' : 'warn' };
+			case 'warmup':
+				return { label: 'AUFWÄRMEN', tone: 'dim' };
 			default:
 				return { label: 'NOCH NICHT', tone: 'dim' };
 		}

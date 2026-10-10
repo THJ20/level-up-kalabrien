@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { serverNow } from '#lib/client/server-clock.svelte.ts';
 	import { apiFetch, errorMessage } from '#lib/client/api.ts';
 	import FeedEntry from '#lib/ui/FeedEntry.svelte';
 	import Panel from '#lib/ui/Panel.svelte';
@@ -11,10 +12,10 @@
 	let exhausted = $state(false);
 	let busy = $state(false);
 	let error = $state('');
-	let now = $state(new Date());
+	let now = $state(new Date(serverNow()));
 
 	$effect(() => {
-		const timer = setInterval(() => (now = new Date()), 60_000);
+		const timer = setInterval(() => (now = new Date(serverNow())), 60_000);
 		return () => clearInterval(timer);
 	});
 

@@ -1,4 +1,4 @@
-import { TIME_ZONE, daysBetween, localDateOf, type LocalDate } from '#lib/domain/index.ts';
+import { TIME_ZONE, UNIT_LABELS, daysBetween, localDateOf, type LocalDate, type PlanUnit } from '#lib/domain/index.ts';
 
 const WEEKDAYS_SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -66,4 +66,14 @@ export function countdown(ms: number): string {
 	return [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60]
 		.map((value) => String(value).padStart(2, '0'))
 		.join(':');
+}
+
+/** Zahl in deutscher Schreibweise mit höchstens einer Nachkommastelle, z. B. `2,5`. */
+export function decimal(value: number): string {
+	return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 }).format(value);
+}
+
+/** Wert mit Einheit, z. B. `40 Wdh.`, `3 Min.` oder `2,5 km`. */
+export function amount(value: number, unit: PlanUnit): string {
+	return `${decimal(value)} ${UNIT_LABELS[unit].short}`;
 }

@@ -84,7 +84,7 @@
 		gap: 12px;
 		padding: 12px;
 		border: 1px solid var(--line-faint);
-		background: rgba(164, 124, 255, 0.04);
+		background: rgba(var(--accent-rgb), 0.04);
 	}
 
 	.title {

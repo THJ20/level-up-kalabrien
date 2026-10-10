@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CalendarDays, ChevronLeft, ChevronRight } from '@lucide/svelte';
-	import { CHALLENGE_START, addDays, type DayStatus, type LocalDate } from '#lib/domain/index.ts';
+	import { WARMUP_START, addDays, type DayStatus, type LocalDate } from '#lib/domain/index.ts';
 	import { dayLabel } from '#lib/client/format.ts';
 	import DayGrid from '../DayGrid.svelte';
 	import Sheet from '../Sheet.svelte';
@@ -13,7 +13,7 @@
 
 	let open = $state(false);
 
-	const previous = $derived(date > CHALLENGE_START ? addDays(date, -1) : null);
+	const previous = $derived(date > WARMUP_START ? addDays(date, -1) : null);
 	const next = $derived(date < today ? addDays(date, 1) : null);
 	const hrefFor = (target: LocalDate) => (target === today ? '/' : `/?date=${target}`);
 </script>
@@ -73,7 +73,7 @@
 		gap: 8px;
 		min-height: 40px;
 		border: 1px solid var(--line-faint);
-		background: rgba(164, 124, 255, 0.05);
+		background: rgba(var(--accent-rgb), 0.05);
 		cursor: pointer;
 		font-size: 14px;
 	}

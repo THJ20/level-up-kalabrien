@@ -1,10 +1,11 @@
 <script lang="ts">
+	import type { HunterRefView } from '#lib/shared/constants.ts';
 	import { dayLabel } from '#lib/client/format.ts';
 	import Avatar from '../Avatar.svelte';
 
 	interface Verdict {
 		id: string;
-		hunter: { id: string; name: string; color: string };
+		hunter: HunterRefView;
 		date: string;
 		penalty: { title: string; description: string };
 		decidedByLot: boolean;
@@ -21,7 +22,7 @@
 	<ul>
 		{#each verdicts as verdict (verdict.id)}
 			<li class:lifted={verdict.status === 'lifted'}>
-				{#if showHunter}<Avatar name={verdict.hunter.name} color={verdict.hunter.color} size={30} />{/if}
+				{#if showHunter}<Avatar name={verdict.hunter.name} color={verdict.hunter.color} src={verdict.hunter.avatarUrl} size={30} />{/if}
 				<div class="text">
 					<span class="title">{verdict.penalty.title}</span>
 					<span class="meta">

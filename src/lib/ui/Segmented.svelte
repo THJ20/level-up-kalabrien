@@ -43,7 +43,7 @@
 		min-height: 36px;
 		padding: 6px 10px;
 		border: 1px solid var(--line-faint);
-		background: rgba(164, 124, 255, 0.05);
+		background: rgba(var(--accent-rgb), 0.05);
 		color: var(--dim);
 		font-family: var(--f-sys);
 		font-weight: 600;
@@ -55,7 +55,7 @@
 	button.active {
 		border-color: var(--line);
 		color: var(--text);
-		background: rgba(164, 124, 255, 0.16);
+		background: rgba(var(--accent-rgb), 0.16);
 		box-shadow: 0 0 12px var(--glow-soft);
 	}
 </style>

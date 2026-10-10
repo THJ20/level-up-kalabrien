@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { HunterRefView } from '#lib/shared/constants.ts';
 	import { Check } from '@lucide/svelte';
 	import { apiFetch, errorMessage } from '#lib/client/api.ts';
 	import { refresh } from '#lib/client/actions.ts';
@@ -15,8 +16,8 @@
 	interface Vote {
 		id: string;
 		date: string;
-		offender: { id: string; name: string; color: string };
-		voters: { hunter: { id: string; name: string; color: string }; hasVoted: boolean }[];
+		offender: HunterRefView;
+		voters: { hunter: HunterRefView; hasVoted: boolean }[];
 		myBallot: string | null;
 		options: Penalty[];
 	}
@@ -66,7 +67,7 @@
 
 <Panel tone="warn">
 	<div class="head">
-		<Avatar name={vote.offender.name} color={vote.offender.color} size={40} />
+		<Avatar name={vote.offender.name} color={vote.offender.color} src={vote.offender.avatarUrl} size={40} />
 		<div>
 			<p class="who">{isOffender ? 'Deine Strafe' : vote.offender.name}</p>
 			<p class="when sys">Daily Quest verpasst · {dayLabel(vote.date)}</p>
@@ -189,7 +190,7 @@
 		width: 100%;
 		padding: 10px 12px;
 		border: 1px solid var(--line-faint);
-		background: rgba(164, 124, 255, 0.04);
+		background: rgba(var(--accent-rgb), 0.04);
 		color: var(--text);
 		text-align: left;
 		cursor: pointer;
@@ -201,7 +202,7 @@
 
 	.option.chosen {
 		border-color: var(--line);
-		background: rgba(164, 124, 255, 0.16);
+		background: rgba(var(--accent-rgb), 0.16);
 		box-shadow: 0 0 12px var(--glow-soft);
 	}
 

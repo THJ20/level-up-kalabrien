@@ -182,7 +182,7 @@
 		gap: 2px;
 		padding: 10px;
 		border: 1px solid var(--line-faint);
-		background: rgba(164, 124, 255, 0.04);
+		background: rgba(var(--accent-rgb), 0.04);
 		cursor: pointer;
 	}
 
@@ -194,7 +194,7 @@
 
 	.effort.active {
 		border-color: var(--line);
-		background: rgba(164, 124, 255, 0.14);
+		background: rgba(var(--accent-rgb), 0.14);
 		box-shadow: 0 0 12px var(--glow-soft);
 	}
 

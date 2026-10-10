@@ -8,5 +8,7 @@ export const init: ServerInit = () => {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	authenticate(event);
-	return resolve(event);
+	// Farbschema schon beim Rendern setzen, damit nichts aufblitzt.
+	const theme = event.locals.hunter?.theme ?? 'monarch';
+	return resolve(event, { transformPageChunk: ({ html }) => html.replace('%lu.theme%', theme) });
 };

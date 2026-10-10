@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { HunterRefView } from '#lib/shared/constants.ts';
 	import { apiFetch } from '#lib/client/api.ts';
 	import { refresh } from '#lib/client/actions.ts';
 	import { describeFeedItem } from '#lib/client/feed-text.ts';
@@ -10,7 +11,7 @@
 		id: string;
 		type: string;
 		createdAt: Date;
-		hunter: { id: string; name: string; color: string };
+		hunter: HunterRefView;
 		payload: Record<string, unknown>;
 		reactions: Record<Reaction, number>;
 		myReactions: Reaction[];
@@ -35,7 +36,7 @@
 
 <article class="entry tone-{text.tone}" class:compact>
 	<a class="avatar" href="/hunter/{item.hunter.id}" aria-label="Statusfenster von {item.hunter.name}">
-		<Avatar name={item.hunter.name} color={item.hunter.color} size={compact ? 28 : 36} />
+		<Avatar name={item.hunter.name} color={item.hunter.color} src={item.hunter.avatarUrl} size={compact ? 28 : 36} />
 	</a>
 	<div class="body">
 		<p class="text">{text.text}</p>
@@ -133,14 +134,14 @@
 		padding: 2px 10px;
 		border: 1px solid var(--line-faint);
 		border-radius: 16px;
-		background: rgba(164, 124, 255, 0.04);
+		background: rgba(var(--accent-rgb), 0.04);
 		cursor: pointer;
 		font-size: 14px;
 	}
 
 	.reactions button.active {
 		border-color: var(--line);
-		background: rgba(164, 124, 255, 0.18);
+		background: rgba(var(--accent-rgb), 0.18);
 	}
 
 	.reactions .num {

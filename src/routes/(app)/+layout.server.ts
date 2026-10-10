@@ -20,6 +20,7 @@ export const load: LayoutServerLoad = ({ locals, depends }) => {
 			rank: summary.level.rank,
 			badges: summary.badges.map((badge) => badge.badgeId)
 		},
-		recentMissed: recentMissedNotices(ctx, locals.hunter.id)
+		recentMissed: recentMissedNotices(ctx, locals.hunter.id),
+		serverNow: ctx.clock.now().getTime()
 	};
 };

@@ -47,3 +47,13 @@ for (const { file, size, scale } of targets) {
 
 await sharp(Buffer.from(BADGE_SVG)).resize(96, 96).png().toFile(`${out}/badge-96.png`);
 console.log(`${out}/badge-96.png`);
+
+// Logo in der App, passend zum Farbschema (Kopfzeile, Login).
+mkdirSync('static/logo', { recursive: true });
+for (const [theme, source] of [
+	['monarch', 'assets/logo/logo-violet.png'],
+	['gate', 'assets/logo/logo-orange.png']
+]) {
+	await sharp(source).resize(256, 256).webp({ quality: 88 }).toFile(`static/logo/logo-${theme}.webp`);
+	console.log(`static/logo/logo-${theme}.webp`);
+}

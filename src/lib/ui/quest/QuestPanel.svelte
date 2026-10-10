@@ -1,26 +1,20 @@
 <script lang="ts">
-	import { ChevronDown } from '@lucide/svelte';
-	import {
-		EXERCISES,
-		challengeDayNumber,
-		emptyTotals,
-		endOfDay,
-		type DaySummary,
-		type Exercise,
-		type LocalDate
-	} from '#lib/domain/index.ts';
+	import { ChevronDown, ClipboardList } from '@lucide/svelte';
+	import { challengeDayNumber, endOfDay, type DaySummary, type LocalDate, type PlanUnit } from '#lib/domain/index.ts';
 	import * as actions from '#lib/client/actions.ts';
 	import { errorMessage } from '#lib/client/api.ts';
 	import { countdown, dayLabel } from '#lib/client/format.ts';
 	import { offlineQueue } from '#lib/client/queue.svelte.ts';
+	import { serverNow } from '#lib/client/server-clock.svelte.ts';
 	import Panel from '../Panel.svelte';
 	import QuestRow from './QuestRow.svelte';
 	import SetList from './SetList.svelte';
 
 	interface SetEntry {
 		id: string;
-		exercise: Exercise;
-		reps: number;
+		exerciseId: string;
+		exerciseName: string;
+		value: number;
 		recordedAt: Date;
 	}
 
@@ -31,29 +25,36 @@
 		sets
 	}: { date: LocalDate; isToday: boolean; day: DaySummary | null; sets: SetEntry[] } = $props();
 
-	let pending = $state(emptyTotals());
+	let pending = $state<Record<string, number>>({});
 	let error = $state('');
 	let showSets = $state(false);
 	let confirmSick = $state(false);
 	let busy = $state(false);
-	let now = $state(Date.now());
+	let now = $state(serverNow());
 
 	$effect(() => {
 		if (!isToday) return;
-		const timer = setInterval(() => (now = Date.now()), 1000);
+		const timer = setInterval(() => (now = serverNow()), 1000);
 		return () => clearInterval(timer);
 	});
 
-	const totals = $derived(day?.totals ?? emptyTotals());
+	const plan = $derived(day?.plan ?? []);
+	const totals = $derived(day?.totals ?? {});
+	const units = $derived(Object.fromEntries(plan.map((item) => [item.exerciseId, item.unit])) as Record<string, PlanUnit>);
 	const queuedSets = $derived(
 		offlineQueue.entries.filter((entry) => entry.kind === 'set' && entry.body?.date === date)
 	);
 	const queued = $derived.by(() => {
-		const sum = emptyTotals();
-		for (const entry of queuedSets) sum[entry.body?.exercise as Exercise] += Number(entry.body?.reps ?? 0);
+		const sum: Record<string, number> = {};
+		for (const entry of queuedSets) {
+			const id = String(entry.body?.exerciseId ?? '');
+			sum[id] = (sum[id] ?? 0) + Number(entry.body?.value ?? 0);
+		}
 		return sum;
 	});
 	const status = $derived(day?.status ?? 'open');
+	const warmup = $derived(status === 'warmup');
+	const dayNumber = $derived(challengeDayNumber(date));
 	const timeLeft = $derived(countdown(endOfDay(date).getTime() - now));
 
 	async function run(task: () => Promise<unknown>) {
@@ -66,10 +67,10 @@
 		}
 	}
 
-	async function add(exercise: Exercise, reps: number) {
-		pending[exercise] += reps;
-		await run(() => actions.addSet(date, exercise, reps));
-		pending[exercise] -= reps;
+	async function add(exerciseId: string, value: number) {
+		pending[exerciseId] = (pending[exerciseId] ?? 0) + value;
+		await run(() => actions.addSet(date, exerciseId, value));
+		pending[exerciseId] -= value;
 	}
 
 	async function sick(report: boolean) {
@@ -80,14 +81,14 @@
 	}
 </script>
 
-<Panel tone={status === 'fulfilled' ? 'ok' : status === 'missed' ? 'warn' : status === 'sick' ? 'sick' : 'default'}>
+<Panel tone={status === 'fulfilled' || (warmup && day?.complete) ? 'ok' : status === 'missed' ? 'warn' : status === 'sick' ? 'sick' : 'default'}>
 	<div class="qhead">
 		<span class="mark num">!</span>
 		<span class="box sys">Daily Quest</span>
 	</div>
 	<p class="qtitle sys">Prepare for Calabria</p>
 	<div class="meta sys">
-		<span>Day {challengeDayNumber(date)} · Goals</span>
+		<span>{dayNumber ? `Day ${dayNumber}` : 'Warm-up'} · Goals</span>
 		{#if isToday}
 			<span>Time left <b class="num">{timeLeft}</b></span>
 		{:else}
@@ -96,11 +97,11 @@
 	</div>
 
 	<div class="rows">
-		{#each EXERCISES as exercise (exercise)}
+		{#each plan as item (item.exerciseId)}
 			<QuestRow
-				{exercise}
-				total={totals[exercise] + pending[exercise] + queued[exercise]}
-				onAdd={(reps) => add(exercise, reps)}
+				{item}
+				total={(totals[item.exerciseId] ?? 0) + (pending[item.exerciseId] ?? 0) + (queued[item.exerciseId] ?? 0)}
+				onAdd={(value) => add(item.exerciseId, value)}
 			/>
 		{/each}
 	</div>
@@ -113,7 +114,10 @@
 	{#if error}<p class="form-error" role="alert">{error}</p>{/if}
 
 	<div class="state">
-		{#if status === 'fulfilled'}
+		{#if warmup}
+			{#if day?.complete}<p class="complete sys">Warm-up complete</p>{/if}
+			<p class="warmupline">Aufwärmtag. Er zählt nicht für XP, Streak oder Strafen. Offizieller Start ist Mo, 12.10.</p>
+		{:else if status === 'fulfilled'}
 			<p class="complete sys">Quest complete{day?.backfilled ? ' · nachgetragen' : ''}</p>
 		{:else if status === 'sick'}
 			<p class="sickline">Krank gemeldet{day?.backfilled ? ' (nachgetragen)' : ''}. Gute Besserung, Hunter.</p>
@@ -161,10 +165,12 @@
 	{#if showSets}
 		<SetList
 			{sets}
-			onUpdate={(id, reps) => run(() => actions.updateSet(id, reps))}
+			{units}
+			onUpdate={(id, value) => run(() => actions.updateSet(id, value))}
 			onDelete={(id) => run(() => actions.deleteSet(id))}
 		/>
 	{/if}
+	<a class="planlink" href="/plan"><ClipboardList size={16} /> Trainingsplan ansehen und ändern</a>
 </Panel>
 
 <style>
@@ -255,6 +261,19 @@
 
 	.sickline {
 		color: var(--sick);
+	}
+
+	.warmupline {
+		font-size: 14px;
+		color: var(--dim);
+	}
+
+	.planlink {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 6px;
+		font-size: 14px;
 	}
 
 	.warn {

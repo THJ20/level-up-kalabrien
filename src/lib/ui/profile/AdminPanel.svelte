@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { HunterRefView } from '#lib/shared/constants.ts';
 	import { Copy, Download } from '@lucide/svelte';
 	import { apiFetch, errorMessage } from '#lib/client/api.ts';
 	import { refresh } from '#lib/client/actions.ts';
@@ -8,7 +9,7 @@
 	let {
 		hunters,
 		meId
-	}: { hunters: { id: string; name: string; color: string }[]; meId: string } = $props();
+	}: { hunters: HunterRefView[]; meId: string } = $props();
 
 	let link = $state('');
 	let copied = $state(false);
@@ -73,7 +74,7 @@
 		<ul>
 			{#each hunters as hunter (hunter.id)}
 				<li>
-					<Avatar name={hunter.name} color={hunter.color} size={28} />
+					<Avatar name={hunter.name} color={hunter.color} src={hunter.avatarUrl} size={28} />
 					<span class="name">{hunter.name}</span>
 					{#if hunter.id !== meId}
 						{#if confirmId === hunter.id}

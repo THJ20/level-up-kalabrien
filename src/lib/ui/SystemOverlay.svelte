@@ -35,8 +35,9 @@
 			onclick={(event) => event.stopPropagation()}
 			onkeydown={() => {}}
 		>
+			{#if message.kind === 'warning'}<span class="static" aria-hidden="true"></span>{/if}
 			<p class="kicker sys">[ {message.kind === 'warning' ? 'WARNING' : 'SYSTEM'} ]</p>
-			<h2 id="system-title" class="title sys">{message.title}</h2>
+			<h2 id="system-title" class="title sys" data-text={message.title}>{message.title}</h2>
 			{#if message.subtitle}<p class="subtitle sys">{message.subtitle}</p>{/if}
 			{#if message.body}<p class="body">{message.body}</p>{/if}
 			<button class="ok sys" type="button" bind:this={button} onclick={onDismiss}>
@@ -56,7 +57,7 @@
 		display: grid;
 		place-items: center;
 		padding: 24px;
-		background: rgba(2, 1, 6, 0.78);
+		background: rgba(var(--shade-rgb), 0.78);
 		animation: fade 0.2s ease-out;
 	}
 
@@ -88,15 +89,14 @@
 	}
 
 	.window {
+		--window-glow: 0 0 46px var(--accent-glow), inset 0 0 30px rgba(var(--accent-rgb), 0.08);
 		position: relative;
 		width: min(400px, 100%);
 		padding: 26px 20px 20px;
 		text-align: center;
 		background: var(--panel-solid);
 		border: 1px solid var(--accent);
-		box-shadow:
-			0 0 46px var(--accent-glow),
-			inset 0 0 30px rgba(164, 124, 255, 0.08);
+		box-shadow: var(--window-glow);
 		animation: pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1);
 	}
 
@@ -140,6 +140,260 @@
 		font-size: 14px;
 		letter-spacing: 0.22em;
 		cursor: pointer;
+	}
+
+	/*
+	 * WARNING: elektrische Störung. Beim Erscheinen flackert das Fenster mehrfach an und aus,
+	 * danach zuckt es in unregelmäßigen Abständen kurz nach. Bei reduzierter Bewegung bleibt
+	 * es ruhig, weil die globale Regel alle Animationen auf den Endzustand verkürzt.
+	 */
+	.kind-warning .window {
+		animation:
+			power-on 1s steps(1, end) both,
+			aftershock 4.7s 1.4s infinite;
+	}
+
+	.kind-warning .burst {
+		animation:
+			burst 1.6s ease-out,
+			flash 1s steps(1, end) both;
+	}
+
+	.kind-warning .title {
+		position: relative;
+		animation:
+			jitter 1s steps(1, end) both,
+			glitch 4.7s 1.4s infinite;
+	}
+
+	.kind-warning .title::before,
+	.kind-warning .title::after {
+		content: attr(data-text);
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0;
+	}
+
+	.kind-warning .title::before {
+		color: #ff2d55;
+		animation: split-left 4.7s 1.4s infinite;
+	}
+
+	.kind-warning .title::after {
+		color: #9fe8ff;
+		animation: split-right 4.7s 1.4s infinite;
+	}
+
+	.static {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background: repeating-linear-gradient(
+			180deg,
+			rgba(255, 255, 255, 0.06) 0 1px,
+			transparent 1px 4px
+		);
+		mix-blend-mode: screen;
+		opacity: 0;
+		animation: static 4.7s 0.2s infinite;
+	}
+
+	@keyframes power-on {
+		0% {
+			opacity: 0;
+			transform: scale(0.96) skewX(-4deg);
+		}
+		8% {
+			opacity: 1;
+			transform: none;
+			border-color: #fff;
+			box-shadow: 0 0 60px rgba(255, 255, 255, 0.7);
+		}
+		14% {
+			opacity: 0.1;
+			border-color: var(--accent);
+			box-shadow: var(--window-glow);
+		}
+		22% {
+			opacity: 1;
+			transform: translateX(-3px);
+			border-color: #fff;
+			box-shadow: 0 0 50px rgba(255, 255, 255, 0.55);
+		}
+		30% {
+			opacity: 0.25;
+			transform: translateX(4px) skewX(3deg);
+			border-color: var(--accent);
+			box-shadow: var(--window-glow);
+		}
+		38% {
+			opacity: 1;
+			transform: none;
+			filter: brightness(1.8);
+		}
+		46% {
+			opacity: 0.5;
+			filter: none;
+		}
+		54% {
+			opacity: 1;
+			border-color: #fff;
+			box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+		}
+		62% {
+			opacity: 0.8;
+			border-color: var(--accent);
+			box-shadow: var(--window-glow);
+		}
+		70%,
+		100% {
+			opacity: 1;
+			transform: none;
+			filter: none;
+			border-color: var(--accent);
+			box-shadow: var(--window-glow);
+		}
+	}
+
+	@keyframes flash {
+		0%,
+		22%,
+		54% {
+			opacity: 0.9;
+		}
+		14%,
+		30%,
+		46% {
+			opacity: 0.15;
+		}
+		70%,
+		100% {
+			opacity: 0.55;
+		}
+	}
+
+	@keyframes jitter {
+		0%,
+		30% {
+			transform: translateX(-2px);
+		}
+		14%,
+		46% {
+			transform: translateX(3px);
+		}
+		70%,
+		100% {
+			transform: none;
+		}
+	}
+
+	@keyframes aftershock {
+		0%,
+		86%,
+		100% {
+			opacity: 1;
+			transform: none;
+			filter: none;
+			border-color: var(--accent);
+		}
+		88% {
+			opacity: 0.35;
+			transform: translateX(2px);
+		}
+		90% {
+			opacity: 1;
+			filter: brightness(1.6);
+			border-color: #fff;
+		}
+		92% {
+			opacity: 0.6;
+			transform: translateX(-2px) skewX(-2deg);
+			border-color: var(--accent);
+		}
+		94% {
+			opacity: 1;
+			transform: none;
+			filter: none;
+		}
+	}
+
+	@keyframes glitch {
+		0%,
+		87%,
+		95%,
+		100% {
+			transform: none;
+		}
+		89% {
+			transform: translate(-3px, 1px);
+		}
+		91% {
+			transform: translate(3px, -1px);
+		}
+		93% {
+			transform: translate(-1px, 0);
+		}
+	}
+
+	@keyframes split-left {
+		0%,
+		87%,
+		95%,
+		100% {
+			opacity: 0;
+			transform: none;
+		}
+		89%,
+		93% {
+			opacity: 0.8;
+			transform: translate(-4px, 0);
+			clip-path: inset(10% 0 55% 0);
+		}
+	}
+
+	@keyframes split-right {
+		0%,
+		87%,
+		95%,
+		100% {
+			opacity: 0;
+			transform: none;
+		}
+		90%,
+		92% {
+			opacity: 0.8;
+			transform: translate(4px, 0);
+			clip-path: inset(50% 0 12% 0);
+		}
+	}
+
+	@keyframes static {
+		0%,
+		100% {
+			opacity: 0;
+		}
+		2%,
+		12% {
+			opacity: 0.9;
+			transform: translateY(0);
+		}
+		6% {
+			opacity: 0.4;
+			transform: translateY(2px);
+		}
+		18%,
+		84% {
+			opacity: 0.12;
+		}
+		88%,
+		92% {
+			opacity: 0.8;
+			transform: translateY(-2px);
+		}
+		96% {
+			opacity: 0.12;
+		}
 	}
 
 	@keyframes fade {

@@ -15,10 +15,10 @@
 		place-items: center;
 		border-radius: 50%;
 		border: 1px solid var(--line);
-		background: radial-gradient(circle, #2b1257 0%, rgba(20, 10, 36, 0.4) 75%);
+		background: radial-gradient(circle, var(--rank-core) 0%, rgba(var(--panel-rgb), 0.4) 75%);
 		box-shadow:
 			0 0 18px var(--glow-soft),
-			inset 0 0 12px rgba(164, 124, 255, 0.25);
+			inset 0 0 12px rgba(var(--accent-rgb), 0.25);
 	}
 
 	span {

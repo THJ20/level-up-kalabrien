@@ -1,5 +1,5 @@
-import { BADGES, localDateOf, type LocalDate } from '#lib/domain/index.ts';
-import { dayLabel, points } from './format';
+import { BADGES, localDateOf, type LocalDate, type PlanUnit } from '#lib/domain/index.ts';
+import { amount, dayLabel, decimal, points } from './format';
 
 export interface FeedItemLike {
 	type: string;
@@ -16,11 +16,11 @@ export interface FeedText {
 	tone: FeedTone;
 }
 
-const REP_NAMES: Record<string, string> = {
-	pushups: 'Liegestütze',
-	squats: 'Kniebeugen',
-	situps: 'Sit-ups'
-};
+interface QuestActivity {
+	name: string;
+	unit: PlanUnit;
+	value: number;
+}
 
 interface BonusActivity {
 	exercise: string;
@@ -48,12 +48,12 @@ export function describeFeedItem(item: FeedItemLike, viewerId: string): FeedText
 		case 'joined':
 			return { text: `${who} ${ist} der Challenge beigetreten.`, tone: 'accent' };
 		case 'activity': {
-			const reps = (payload.reps ?? {}) as Record<string, number>;
+			const quest = (payload.quest ?? []) as QuestActivity[];
 			const bonus = (payload.bonus ?? []) as BonusActivity[];
 			const parts = [
-				...Object.entries(REP_NAMES)
-					.filter(([key]) => (reps[key] ?? 0) > 0)
-					.map(([key, name]) => `${reps[key]} ${name}`),
+				...quest.map((entry) =>
+					entry.unit === 'reps' ? `${decimal(entry.value)} ${entry.name}` : `${entry.name} (${amount(entry.value, entry.unit)})`
+				),
 				...bonus.map(
 					(entry) =>
 						`${entry.exercise} (${entry.minutes !== null ? `${entry.minutes} Min.` : `${entry.reps} Wdh.`}, +${points(entry.points)} BP)`
@@ -91,6 +91,16 @@ export function describeFeedItem(item: FeedItemLike, viewerId: string): FeedText
 				payload.reason === 'sick' ? `sich für den ${day} nachträglich krank gemeldet` : `den ${day} nachgetragen`;
 			const consequence = payload.verdictLifted ? 'Die Strafe ist aufgehoben.' : 'Die Abstimmung entfällt.';
 			return { text: `${who} ${hat} ${how}. ${consequence}`, tone: 'ok' };
+		}
+		case 'plan_changed': {
+			const items = (payload.items ?? []) as { name: string; unit: PlanUnit; target: number }[];
+			const from = payload.validFrom as LocalDate | undefined;
+			const applies = from && from > localDateOf(item.createdAt) ? `, gilt ab ${dayLabel(from)}` : '';
+			return {
+				text: `${who} ${hat} ${self ? 'deinen' : 'den'} Trainingsplan geändert${applies || '.'}`,
+				detail: items.map((entry) => `${entry.name} ${amount(entry.target, entry.unit)}`).join(' · '),
+				tone: 'accent'
+			};
 		}
 		case 'verdict':
 			return {

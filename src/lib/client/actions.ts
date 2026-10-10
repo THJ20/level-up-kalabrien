@@ -1,5 +1,5 @@
 import { invalidate } from '$app/navigation';
-import type { Effort, Exercise, LocalDate } from '#lib/domain/index.ts';
+import type { Effort, LocalDate, PlanUnit } from '#lib/domain/index.ts';
 import { apiFetch, isNetworkError } from './api';
 import type { QueuedEntry } from './offline';
 import { offlineQueue } from './queue.svelte';
@@ -27,19 +27,30 @@ async function sendOrQueue(entry: Omit<QueuedEntry, 'createdAt'>): Promise<Deliv
 	}
 }
 
-export function addSet(date: LocalDate, exercise: Exercise, reps: number): Promise<Delivery> {
+export function addSet(date: LocalDate, exerciseId: string, value: number): Promise<Delivery> {
 	const clientId = newClientId();
 	return sendOrQueue({
 		id: clientId,
 		kind: 'set',
 		method: 'POST',
 		path: '/api/sets',
-		body: { date, exercise, reps, clientId }
+		body: { date, exerciseId, value, clientId }
 	});
 }
 
-export async function updateSet(id: string, reps: number): Promise<void> {
-	await apiFetch(`/api/sets/${id}`, { method: 'PATCH', body: { reps } });
+export async function updateSet(id: string, value: number): Promise<void> {
+	await apiFetch(`/api/sets/${id}`, { method: 'PATCH', body: { value } });
+}
+
+export interface PlanItemPayload {
+	exerciseId?: string;
+	newExercise?: { name: string; kind: 'time' | 'reps'; secondsPerRep?: number | null; tracksDistance?: boolean };
+	unit: PlanUnit;
+	target: number;
+}
+
+export async function savePlan(items: PlanItemPayload[]): Promise<void> {
+	await apiFetch('/api/plan', { method: 'PUT', body: { items } });
 }
 
 export async function deleteSet(id: string): Promise<void> {

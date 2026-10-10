@@ -33,8 +33,11 @@
 		sick: 'krank',
 		open: 'offen',
 		unscored: 'ohne Wertung',
-		missed: 'verpasst'
+		missed: 'verpasst',
+		warmup: 'Aufwärmtag, zählt nicht'
 	};
+
+	const hasWarmup = $derived(days.some((day) => day.status === 'warmup'));
 </script>
 
 <div class="grid-wrap">
@@ -71,6 +74,7 @@
 		<span><i class="s-missed"></i>verpasst</span>
 		<span><i class="s-open"></i>offen</span>
 		<span><i class="s-unscored"></i>ohne Wertung</span>
+		{#if hasWarmup}<span><i class="s-warmup"></i>Aufwärmtag</span>{/if}
 	</p>
 </div>
 
@@ -128,13 +132,18 @@
 	}
 
 	.s-open {
-		background: rgba(164, 124, 255, 0.12);
+		background: rgba(var(--accent-rgb), 0.12);
 		border-color: var(--line);
 	}
 
 	.s-unscored {
 		background: var(--unscored);
 		color: var(--muted);
+	}
+
+	.s-warmup {
+		border: 1px dashed var(--line-dim);
+		color: var(--dim);
 	}
 
 	.selected {
@@ -161,5 +170,9 @@
 		width: 12px;
 		height: 12px;
 		border: 1px solid transparent;
+	}
+
+	.legend i.s-warmup {
+		border: 1px dashed var(--line-dim);
 	}
 </style>

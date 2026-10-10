@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { challengeDayNumber, isLocalDate } from '#lib/domain/index.ts';
+import { isTrackedDay } from '#lib/domain/index.ts';
 import { getApp } from '#lib/server/app.ts';
 import { listExercises } from '#lib/server/bonus.ts';
 import { listFeed } from '#lib/server/feed.ts';
@@ -15,16 +15,13 @@ export const load: PageServerLoad = ({ locals, url, depends }) => {
 	const summary = hunterSummary(ctx, me.id);
 
 	const requested = url.searchParams.get('date');
-	const date =
-		requested && isLocalDate(requested) && challengeDayNumber(requested) !== null && requested <= summary.today
-			? requested
-			: summary.today;
+	const date = requested && isTrackedDay(requested) && requested <= summary.today ? requested : summary.today;
 
 	return {
 		summary,
 		date,
 		isToday: date === summary.today,
-		detail: challengeDayNumber(date) !== null ? dayDetail(ctx, me.id, date) : null,
+		detail: isTrackedDay(date) ? dayDetail(ctx, me.id, date) : null,
 		calendar: hunterTimeline(ctx, me.id).map((day) => ({ date: day.date, status: day.status })),
 		board: todayBoard(ctx),
 		exercises: listExercises(ctx),

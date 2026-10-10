@@ -1,18 +1,26 @@
 <script lang="ts">
-	import { CHALLENGE_DAYS } from '#lib/domain/index.ts';
+	import { CHALLENGE_DAYS, CHALLENGE_START } from '#lib/domain/index.ts';
+	import { dayLabel } from '#lib/client/format.ts';
 	import ProgressBar from '../ProgressBar.svelte';
 
-	let { daysLeft, dayNumber }: { daysLeft: number; dayNumber: number | null } = $props();
+	let { daysLeft, dayNumber, today }: { daysLeft: number; dayNumber: number | null; today: string } = $props();
+
+	const beforeStart = $derived(today < CHALLENGE_START);
 </script>
 
 <section class="hero" aria-label="Countdown bis Kalabrien">
 	<p class="count num">{daysLeft}</p>
 	<p class="label sys">{daysLeft === 1 ? 'Tag bis Kalabrien' : 'Tage bis Kalabrien'}</p>
 	<div class="bar">
-		<ProgressBar value={(dayNumber ?? CHALLENGE_DAYS) / CHALLENGE_DAYS} height={4} label="Fortschritt der Challenge" />
+		<ProgressBar
+			value={beforeStart ? 0 : (dayNumber ?? CHALLENGE_DAYS) / CHALLENGE_DAYS}
+			height={4}
+			label="Fortschritt der Challenge"
+		/>
 	</div>
 	<p class="sub">
-		{#if dayNumber}Tag {dayNumber} von {CHALLENGE_DAYS}{:else}Challenge beendet{/if} · Abflug Do, 29.04.2027
+		{#if dayNumber}Tag {dayNumber} von {CHALLENGE_DAYS}{:else if beforeStart}Aufwärmphase · Start {dayLabel(CHALLENGE_START)}{:else}Challenge beendet{/if}
+		· Abflug Do, 29.04.2027
 	</p>
 </section>
 
@@ -29,7 +37,7 @@
 		color: var(--accent-text);
 		text-shadow:
 			0 0 26px var(--glow),
-			0 0 60px rgba(120, 60, 255, 0.35);
+			0 0 60px rgba(var(--glow-rgb), 0.35);
 	}
 
 	.label {

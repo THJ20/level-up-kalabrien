@@ -48,7 +48,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 40;
-		background: rgba(2, 1, 6, 0.72);
+		background: rgba(var(--shade-rgb), 0.72);
 		animation: fade 0.15s ease-out;
 	}
 

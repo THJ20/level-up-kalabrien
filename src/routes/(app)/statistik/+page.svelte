@@ -1,8 +1,22 @@
 <script lang="ts">
+	import { WARMUP_START } from '#lib/domain/index.ts';
 	import { apiFetch, errorMessage } from '#lib/client/api.ts';
-	import { EXERCISE_COLORS, METRIC_LABELS, chartOption, personStyle, type ChartSeries } from '#lib/client/chart-options.ts';
-	import { count, dayLabel, points } from '#lib/client/format.ts';
-	import { kpis, rangeFor, series, type Metric, type RangePreset, type StatsDay, type View } from '#lib/client/stats.ts';
+	import { OTHERS_COLOR, SERIES_COLORS, chartOption, personStyle, singleColor, type ChartSeries } from '#lib/client/chart-options.ts';
+	import { count, dayLabel, decimal, points } from '#lib/client/format.ts';
+	import {
+		METRIC_LABELS,
+		kpis,
+		rangeFor,
+		series,
+		seriesOf,
+		topExercises,
+		type Metric,
+		type RangePreset,
+		type StatsDay,
+		type StatsExercise,
+		type View
+	} from '#lib/client/stats.ts';
+	import type { HunterRefView } from '#lib/shared/constants.ts';
 	import Chart from '#lib/ui/Chart.svelte';
 	import DayGrid from '#lib/ui/DayGrid.svelte';
 	import Panel from '#lib/ui/Panel.svelte';
@@ -10,13 +24,13 @@
 
 	let { data } = $props();
 
-	type Series = { hunter: { id: string; name: string; color: string }; days: StatsDay[] };
+	type Series = { hunter: HunterRefView; days: StatsDay[]; exercises: StatsExercise[] };
 
 	let preset = $state<RangePreset | 'custom'>('30');
 	let customFrom = $state('');
 	let customTo = $state('');
 	let selected = $state<string[]>([]);
-	let metric = $state<Metric>('all');
+	let metric = $state<Metric>('progress');
 	let view = $state<View>('day');
 	let loaded = $state<{ key: string; series: Series[] } | null>(null);
 	let loading = $state(false);
@@ -60,22 +74,37 @@
 		selected = current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id];
 	}
 
+	// Eine Person, Wiederholungen: gestapelt nach den häufigsten Übungen, der Rest als „Andere“.
 	const chart = $derived.by(() => {
-		if (seriesData.length === 1 && metric === 'all' && view !== 'cumulative') {
-			const days = seriesData[0].days;
-			const list: ChartSeries[] = (['pushups', 'squats', 'situps'] as const).map((exercise) => ({
-				name: METRIC_LABELS[exercise],
-				color: EXERCISE_COLORS[exercise],
-				points: series(days, exercise, view)
-			}));
-			return { stacked: true, list };
+		if (seriesData.length === 1 && metric === 'reps' && view !== 'cumulative') {
+			const { days, exercises } = seriesData[0];
+			const { top, others } = topExercises(days, exercises);
+			if (top.length > 1) {
+				const list: ChartSeries[] = top.map((exercise, index) => ({
+					name: exercise.name,
+					color: SERIES_COLORS[index],
+					points: seriesOf(days, (day) => day.byExercise[exercise.key] ?? 0, view)
+				}));
+				if (others.length > 0) {
+					list.push({
+						name: 'Andere',
+						color: OTHERS_COLOR,
+						points: seriesOf(
+							days,
+							(day) => others.reduce((sum, exercise) => sum + (day.byExercise[exercise.key] ?? 0), 0),
+							view
+						)
+					});
+				}
+				return { stacked: true, list };
+			}
 		}
 		const list: ChartSeries[] = seriesData.map((entry) => {
 			const style = personStyle(data.hunters.findIndex((hunter) => hunter.id === entry.hunter.id));
 			const single = seriesData.length === 1;
 			return {
 				name: entry.hunter.name,
-				color: single ? (metric === 'all' ? EXERCISE_COLORS.pushups : EXERCISE_COLORS[metric]) : style.color,
+				color: single ? singleColor(data.me.theme) : style.color,
 				dashed: !single && style.dashed,
 				points: series(entry.days, metric, view)
 			};
@@ -83,9 +112,19 @@
 		return { stacked: false, list };
 	});
 
-	const option = $derived(chartOption({ series: chart.list, view, stacked: chart.stacked }));
+	const option = $derived(
+		chartOption({
+			series: chart.list,
+			view,
+			stacked: chart.stacked,
+			theme: data.me.theme,
+			suffix: metric === 'progress' ? ' %' : ''
+		})
+	);
 	const title = $derived(
-		`${METRIC_LABELS[metric]} ${view === 'day' ? 'pro Tag' : view === 'week' ? 'pro Woche' : 'kumuliert'}`
+		metric === 'progress'
+			? `Planerfüllung ${view === 'day' ? 'pro Tag' : view === 'week' ? 'pro Woche (Mittel)' : '(laufendes Mittel)'}`
+			: `${METRIC_LABELS[metric]} ${view === 'day' ? 'pro Tag' : view === 'week' ? 'pro Woche' : 'kumuliert'}`
 	);
 </script>
 
@@ -110,8 +149,8 @@
 				/>
 				{#if preset === 'custom'}
 					<div class="dates">
-						<label class="field"><span>Von</span><input class="input" id="stats-from" type="date" min="2026-10-09" max={data.today} bind:value={customFrom} /></label>
-						<label class="field"><span>Bis</span><input class="input" id="stats-to" type="date" min="2026-10-09" max={data.today} bind:value={customTo} /></label>
+						<label class="field"><span>Von</span><input class="input" id="stats-from" type="date" min={WARMUP_START} max={data.today} bind:value={customFrom} /></label>
+						<label class="field"><span>Bis</span><input class="input" id="stats-to" type="date" min={WARMUP_START} max={data.today} bind:value={customTo} /></label>
 					</div>
 				{/if}
 			</div>
@@ -137,10 +176,9 @@
 					label="Kennzahl"
 					bind:value={metric}
 					options={[
-						{ value: 'all', label: 'Alle' },
-						{ value: 'pushups', label: 'Liegest.' },
-						{ value: 'squats', label: 'Kniebeugen' },
-						{ value: 'situps', label: 'Sit-ups' },
+						{ value: 'progress', label: 'Plan %' },
+						{ value: 'reps', label: 'Wdh.' },
+						{ value: 'minutes', label: 'Minuten' },
 						{ value: 'bonus', label: 'Bonus' }
 					]}
 				/>
@@ -167,11 +205,11 @@
 			{@const k = kpis(entry.days)}
 			<Panel title={seriesData.length > 1 ? entry.hunter.name : 'Kennzahlen'}>
 				<dl class="tiles">
-					<div><dt>Liegestütze</dt><dd class="num">{count(k.totals.pushups)}</dd></div>
-					<div><dt>Kniebeugen</dt><dd class="num">{count(k.totals.squats)}</dd></div>
-					<div><dt>Sit-ups</dt><dd class="num">{count(k.totals.situps)}</dd></div>
-					<div><dt>Ø Wdh. pro Tag</dt><dd class="num">{count(k.average)}</dd></div>
-					<div><dt>Bester Tag</dt><dd class="num">{k.best ? count(k.best.value) : '–'}</dd>{#if k.best}<span class="hint">{dayLabel(k.best.date)}</span>{/if}</div>
+					<div><dt>Wiederholungen</dt><dd class="num">{count(k.reps)}</dd></div>
+					<div><dt>Minuten</dt><dd class="num">{count(k.minutes)}</dd></div>
+					<div><dt>Kilometer</dt><dd class="num">{decimal(k.km)}</dd></div>
+					<div><dt>Ø Planerfüllung</dt><dd class="num">{k.averageProgress} %</dd></div>
+					<div><dt>Bester Tag (Wdh.)</dt><dd class="num">{k.best ? count(k.best.value) : '–'}</dd>{#if k.best}<span class="hint">{dayLabel(k.best.date)}</span>{/if}</div>
 					<div><dt>Bonuspunkte</dt><dd class="num">{points(k.bonus)}</dd></div>
 					<div><dt>Erfüllt</dt><dd class="num ok">{k.fulfilled}</dd></div>
 					<div><dt>Krank</dt><dd class="num">{k.sick}</dd></div>
@@ -197,7 +235,7 @@
 						{#each chart.list[0]?.points ?? [] as point, index (point.key)}
 							<tr>
 								<th scope="row">{point.label}</th>
-								{#each chart.list as entry (entry.name)}<td class="num">{points(entry.points[index]?.value ?? 0)}</td>{/each}
+								{#each chart.list as entry (entry.name)}<td class="num">{decimal(entry.points[index]?.value ?? 0)}{metric === 'progress' ? ' %' : ''}</td>{/each}
 							</tr>
 						{/each}
 					</tbody>
@@ -269,7 +307,7 @@
 	.person.on {
 		border-color: var(--line);
 		color: var(--text);
-		background: rgba(164, 124, 255, 0.14);
+		background: rgba(var(--accent-rgb), 0.14);
 	}
 
 	.dot {

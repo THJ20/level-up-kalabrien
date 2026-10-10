@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Lock, Medal } from '@lucide/svelte';
-	import { BADGES, type BadgeGroup } from '#lib/domain/index.ts';
+	import { Lock } from '@lucide/svelte';
+	import { BADGES, BADGE_GROUPS } from '#lib/domain/index.ts';
+	import { BADGE_ICONS } from './badge-icons';
 
 	let { earned }: { earned: { badgeId: string; earnedAt: Date }[] } = $props();
 
 	const earnedIds = $derived(new Set(earned.map((badge) => badge.badgeId)));
-	const groups: BadgeGroup[] = ['Durchhalten', 'Rang', 'Volumen', 'Bonus', 'Spaß'];
+	const groups = BADGE_GROUPS;
 </script>
 
 <div class="groups">
@@ -15,9 +16,10 @@
 			<ul>
 				{#each BADGES.filter((badge) => badge.group === group) as badge (badge.id)}
 					{@const has = earnedIds.has(badge.id)}
+					{@const Icon = BADGE_ICONS[badge.icon]}
 					<li class:has title={badge.description}>
 						<span class="icon" aria-hidden="true">
-							{#if has}<Medal size={18} />{:else}<Lock size={14} />{/if}
+							{#if has && Icon}<Icon size={18} />{:else}<Lock size={14} />{/if}
 						</span>
 						<span class="text">
 							<span class="name">{badge.name}</span>
@@ -66,7 +68,7 @@
 	li.has {
 		opacity: 1;
 		border-color: var(--line);
-		background: rgba(164, 124, 255, 0.12);
+		background: rgba(var(--accent-rgb), 0.12);
 		box-shadow: 0 0 12px var(--glow-soft);
 	}
 
@@ -77,7 +79,7 @@
 		width: 28px;
 		height: 28px;
 		border-radius: 50%;
-		background: rgba(164, 124, 255, 0.1);
+		background: rgba(var(--accent-rgb), 0.1);
 		color: var(--muted);
 	}
 

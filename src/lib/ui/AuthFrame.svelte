@@ -31,8 +31,8 @@
 		background: var(--panel);
 		border: 1px solid var(--line);
 		box-shadow:
-			0 0 40px rgba(130, 80, 255, 0.28),
-			inset 0 0 30px rgba(164, 124, 255, 0.08);
+			0 0 40px rgba(var(--glow-rgb), 0.28),
+			inset 0 0 30px rgba(var(--accent-rgb), 0.08);
 		animation: appear 0.5s cubic-bezier(0.2, 1.2, 0.4, 1);
 	}
 

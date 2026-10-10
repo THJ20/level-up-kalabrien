@@ -12,12 +12,16 @@ export class ApiError extends Error {
 /** Ruft die JSON-API auf. Fehler kommen als `ApiError` mit deutscher Meldung zurück. */
 export async function apiFetch<T = unknown>(
 	path: string,
-	options: { method?: string; body?: unknown } = {}
+	options: { method?: string; body?: unknown; raw?: Blob } = {}
 ): Promise<T> {
 	const response = await fetch(path, {
-		method: options.method ?? (options.body !== undefined ? 'POST' : 'GET'),
-		headers: options.body !== undefined ? { 'content-type': 'application/json' } : undefined,
-		body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+		method: options.method ?? (options.body !== undefined || options.raw ? 'POST' : 'GET'),
+		headers: options.raw
+			? { 'content-type': options.raw.type || 'application/octet-stream' }
+			: options.body !== undefined
+				? { 'content-type': 'application/json' }
+				: undefined,
+		body: options.raw ?? (options.body !== undefined ? JSON.stringify(options.body) : undefined),
 		credentials: 'same-origin'
 	});
 	const data = await response.json().catch(() => null);

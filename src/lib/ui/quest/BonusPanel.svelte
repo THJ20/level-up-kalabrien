@@ -81,8 +81,8 @@
 			{#if overtimePoints > 0}
 				<li>
 					<div class="what">
-						<span class="name">Overtime</span>
-						<span class="detail">Wiederholungen über 100 bei den Pflichtübungen</span>
+						<span class="name">Mehrleistung</span>
+						<span class="detail">Über dein Planziel hinaus</span>
 					</div>
 					<span class="bp num">+{points(overtimePoints)}</span>
 				</li>

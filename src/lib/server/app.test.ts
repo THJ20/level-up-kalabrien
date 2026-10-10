@@ -43,7 +43,8 @@ describe('App', () => {
 			avatarDir: join(dir, 'avatars'),
 			goLiveDate: '2026-10-12',
 			origin: 'https://lvl.test',
-			vapidSubject: 'https://lvl.test'
+			vapidSubject: 'https://lvl.test',
+			simulatedNow: null
 		};
 		const firstLog: string[] = [];
 		const first = startApp(config, firstLog);

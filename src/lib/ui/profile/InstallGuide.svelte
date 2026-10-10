@@ -75,7 +75,7 @@
 
 	section.current {
 		border-color: var(--line);
-		background: rgba(164, 124, 255, 0.08);
+		background: rgba(var(--accent-rgb), 0.08);
 	}
 
 	h3 {

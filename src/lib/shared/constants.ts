@@ -1,5 +1,13 @@
 /** Werte, die Server und Oberfläche gemeinsam nutzen. */
 
+/** Kurzform eines Hunters, wie die Oberfläche sie überall anzeigt. */
+export interface HunterRefView {
+	id: string;
+	name: string;
+	color: string;
+	avatarUrl: string | null;
+}
+
 export const AVATAR_COLORS = [
 	'#a47cff',
 	'#7ef0d0',

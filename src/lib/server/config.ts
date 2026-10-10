@@ -10,11 +10,20 @@ export interface AppConfig {
 	/** Öffentliche Adresse ohne abschließenden Schrägstrich, z. B. `https://levelup.example.de`. */
 	origin: string | null;
 	vapidSubject: string;
+	/** Nur zum Ausprobieren: Die App tut so, als wäre es gerade dieser Zeitpunkt. */
+	simulatedNow: Date | null;
 }
 
 function read(env: Record<string, string | undefined>, key: string): string | null {
 	const value = env[key]?.trim();
 	return value ? value : null;
+}
+
+function simulatedNow(value: string | null): Date | null {
+	if (value === null) return null;
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) throw new Error(`SIMULATED_NOW ist kein gültiger Zeitpunkt: "${value}".`);
+	return date;
 }
 
 export function loadConfig(env: Record<string, string | undefined>): AppConfig {
@@ -30,6 +39,7 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
 		avatarDir: read(env, 'AVATAR_DIR') ?? join(dirname(databasePath), 'avatars'),
 		goLiveDate,
 		origin,
-		vapidSubject: read(env, 'VAPID_SUBJECT') ?? origin ?? 'mailto:level-up@example.invalid'
+		vapidSubject: read(env, 'VAPID_SUBJECT') ?? origin ?? 'mailto:level-up@example.invalid',
+		simulatedNow: simulatedNow(read(env, 'SIMULATED_NOW'))
 	};
 }

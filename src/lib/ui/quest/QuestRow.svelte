@@ -1,20 +1,28 @@
 <script lang="ts">
 	import { CircleCheck, Plus } from '@lucide/svelte';
-	import { EXERCISE_LABELS, QUEST_TARGET, type Exercise } from '#lib/domain/index.ts';
+	import { SET_LIMITS, UNIT_LABELS, roundToUnit, type PlanItem } from '#lib/domain/index.ts';
+	import { decimal } from '#lib/client/format.ts';
 	import ProgressBar from '../ProgressBar.svelte';
 
-	let {
-		exercise,
-		total,
-		onAdd
-	}: { exercise: Exercise; total: number; onAdd: (reps: number) => void } = $props();
+	let { item, total, onAdd }: { item: PlanItem; total: number; onAdd: (value: number) => void } = $props();
 
 	let customOpen = $state(false);
 	let customValue = $state<number | null>(null);
 	let customInput: HTMLInputElement | undefined = $state();
 
-	const done = $derived(total >= QUEST_TARGET);
-	const missing = $derived(Math.max(0, QUEST_TARGET - total));
+	const done = $derived(total + 1e-9 >= item.target);
+	const missing = $derived(Math.max(0, roundToUnit(item.unit, item.target - total)));
+	const limits = $derived(SET_LIMITS[item.unit]);
+	const step = $derived(item.unit === 'km' ? 0.1 : 1);
+
+	/** Schnelltasten passend zu Einheit und Tagesziel. */
+	const quick = $derived.by(() => {
+		if (item.unit === 'km') return [0.5, 1, 2];
+		if (item.unit === 'minutes') return item.target >= 20 ? [5, 10, 15] : [1, 2, 5];
+		if (item.target >= 60) return [10, 20, 25];
+		if (item.target >= 20) return [5, 10, 15];
+		return [1, 2, 5];
+	});
 
 	$effect(() => {
 		if (customOpen) customInput?.focus();
@@ -22,8 +30,8 @@
 
 	function submitCustom(event: SubmitEvent) {
 		event.preventDefault();
-		if (!customValue || customValue < 1) return;
-		onAdd(Math.min(500, Math.round(customValue)));
+		if (!customValue || customValue <= 0) return;
+		onAdd(Math.min(limits.max, roundToUnit(item.unit, customValue)));
 		customValue = null;
 		customOpen = false;
 	}
@@ -32,25 +40,25 @@
 <div class="row" class:done>
 	<div class="head">
 		<span class="label sys">
-			{EXERCISE_LABELS[exercise]}
+			{item.name}
 			{#if done}<CircleCheck size={17} />{/if}
 		</span>
-		<span class="count num">[<b>{total}</b>/{QUEST_TARGET}]</span>
+		<span class="count num">[<b>{decimal(total)}</b>/{decimal(item.target)}]{item.unit === 'reps' ? '' : ` ${UNIT_LABELS[item.unit].short}`}</span>
 	</div>
-	<ProgressBar value={total / QUEST_TARGET} tone={done ? 'ok' : 'accent'} label="{EXERCISE_LABELS[exercise]} Fortschritt" />
+	<ProgressBar value={total / item.target} tone={done ? 'ok' : 'accent'} label="{item.name} Fortschritt" />
 	<div class="buttons">
-		{#each [10, 20, 25] as reps (reps)}
-			<button type="button" class="quick num" onclick={() => onAdd(reps)}>+{reps}</button>
+		{#each quick as value (value)}
+			<button type="button" class="quick num" onclick={() => onAdd(value)}>+{decimal(value)}</button>
 		{/each}
-		{#if !done && missing > 0 && missing !== 10 && missing !== 20 && missing !== 25}
-			<button type="button" class="quick rest num" onclick={() => onAdd(missing)} title="Rest bis 100 eintragen">
-				+{missing}
+		{#if !done && missing > 0 && !quick.includes(missing) && missing <= limits.max}
+			<button type="button" class="quick rest num" onclick={() => onAdd(missing)} title="Rest bis zum Ziel eintragen">
+				+{decimal(missing)}
 			</button>
 		{/if}
 		<button
 			type="button"
 			class="quick custom"
-			aria-label="Eigene Zahl eintragen"
+			aria-label="Eigenen Wert eintragen"
 			aria-expanded={customOpen}
 			onclick={() => (customOpen = !customOpen)}
 		>
@@ -62,11 +70,12 @@
 			<input
 				class="input num"
 				type="number"
-				inputmode="numeric"
-				min="1"
-				max="500"
-				placeholder="Wiederholungen"
-				aria-label="Wiederholungen für {EXERCISE_LABELS[exercise]}"
+				inputmode={item.unit === 'km' ? 'decimal' : 'numeric'}
+				min={limits.min}
+				max={limits.max}
+				{step}
+				placeholder={UNIT_LABELS[item.unit].long}
+				aria-label="{UNIT_LABELS[item.unit].long} für {item.name}"
 				bind:value={customValue}
 				bind:this={customInput}
 			/>
@@ -86,21 +95,26 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
+		gap: 10px;
 	}
 
 	.label {
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
+		min-width: 0;
 		font-size: 15px;
 		letter-spacing: 0.1em;
+		overflow-wrap: anywhere;
 	}
 
 	.label :global(svg) {
+		flex: none;
 		color: var(--ok);
 	}
 
 	.count {
+		flex: none;
 		font-size: 15px;
 		font-weight: 600;
 		color: var(--dim);
@@ -123,7 +137,7 @@
 		flex: 1;
 		min-height: 40px;
 		border: 1px solid var(--line-dim);
-		background: rgba(164, 124, 255, 0.07);
+		background: rgba(var(--accent-rgb), 0.07);
 		color: var(--text);
 		font-weight: 600;
 		font-size: 15px;
@@ -140,7 +154,7 @@
 
 	.quick:active {
 		transform: scale(0.95);
-		background: rgba(164, 124, 255, 0.22);
+		background: rgba(var(--accent-rgb), 0.22);
 	}
 
 	.rest {

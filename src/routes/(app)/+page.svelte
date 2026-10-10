@@ -7,12 +7,13 @@
 	import QuestPanel from '#lib/ui/quest/QuestPanel.svelte';
 	import FeedEntry from '#lib/ui/FeedEntry.svelte';
 	import Panel from '#lib/ui/Panel.svelte';
+	import { serverNow } from '#lib/client/server-clock.svelte.ts';
 
 	let { data } = $props();
 
-	let now = $state(new Date());
+	let now = $state(new Date(serverNow()));
 	$effect(() => {
-		const timer = setInterval(() => (now = new Date()), 60_000);
+		const timer = setInterval(() => (now = new Date(serverNow())), 60_000);
 		return () => clearInterval(timer);
 	});
 </script>
@@ -21,9 +22,11 @@
 
 <div class="page">
 	<div class="top">
-		<CountdownHero daysLeft={data.summary.daysUntilDeparture} dayNumber={data.summary.dayNumber} />
+		<CountdownHero daysLeft={data.summary.daysUntilDeparture} dayNumber={data.summary.dayNumber} today={data.summary.today} />
 		<HunterCard
 			name={data.summary.hunter.name}
+			color={data.summary.hunter.color}
+			avatarUrl={data.summary.hunter.avatarUrl}
 			level={data.summary.level}
 			streak={data.summary.streak}
 			bonusPoints={data.summary.bonusPoints}

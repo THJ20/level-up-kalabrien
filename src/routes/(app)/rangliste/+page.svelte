@@ -67,7 +67,7 @@
 				<li class:me={row.hunter.id === data.me.id}>
 					<span class="pos num pos-{index + 1}">{index + 1}</span>
 					<a class="who" href="/hunter/{row.hunter.id}">
-						<Avatar name={row.hunter.name} color={row.hunter.color} size={34} />
+						<Avatar name={row.hunter.name} color={row.hunter.color} src={row.hunter.avatarUrl} size={34} />
 						<span class="name">{row.hunter.name}</span>
 					</a>
 					{#if tab === 'gesamt'}
@@ -127,7 +127,7 @@
 	}
 
 	li.me {
-		background: linear-gradient(90deg, rgba(164, 124, 255, 0.12), transparent);
+		background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.12), transparent);
 	}
 
 	.pos {

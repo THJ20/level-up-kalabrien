@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { BADGES } from '#lib/domain/index.ts';
-	import { count, points } from '#lib/client/format.ts';
+	import { ClipboardList } from '@lucide/svelte';
+	import { amount, count, dayLabel, decimal, points } from '#lib/client/format.ts';
 	import Avatar from '#lib/ui/Avatar.svelte';
 	import BadgeGrid from '#lib/ui/BadgeGrid.svelte';
 	import DayGrid from '#lib/ui/DayGrid.svelte';
@@ -21,9 +22,9 @@
 		{ label: 'Streak', value: `${summary.streak.current}` },
 		{ label: 'Längster Streak', value: `${summary.streak.longest}` },
 		{ label: 'Bonuspunkte', value: points(summary.bonusPoints) },
-		{ label: 'Liegestütze', value: count(data.profile.volume.pushups) },
-		{ label: 'Kniebeugen', value: count(data.profile.volume.squats) },
-		{ label: 'Sit-ups', value: count(data.profile.volume.situps) },
+		{ label: 'Wiederholungen', value: count(data.profile.volume.reps) },
+		{ label: 'Minuten', value: count(data.profile.volume.minutes) },
+		{ label: 'Kilometer', value: decimal(data.profile.volume.km) },
 		{ label: 'Verpasst', value: `${data.profile.missedDays}` },
 		{ label: 'Krank', value: `${data.profile.sickDays}` }
 	]);
@@ -38,13 +39,15 @@
 			<RankBadge rank={summary.level.rank} size={84} />
 			<div class="who">
 				<div class="name">
-					<Avatar name={summary.hunter.name} color={summary.hunter.color} size={26} />
+					<Avatar name={summary.hunter.name} color={summary.hunter.color} src={summary.hunter.avatarUrl} size={26} />
 					<h1>{summary.hunter.name}</h1>
 				</div>
 				<p class="line sys">Level <b class="num">{summary.level.level}</b> · {summary.level.rank}-Rank Hunter</p>
 				<p class="line sys">Title: <b>{title}</b></p>
 				<div class="xp"><ProgressBar value={summary.level.progress} label="Fortschritt bis zum nächsten Level" /></div>
-				<p class="xptext num">{count(summary.level.xp)} XP</p>
+				<p class="xptext num">
+					{count(summary.level.xp)} XP{#if summary.level.xpToNext !== null} · noch {count(summary.level.xpToNext)} XP bis Lv. {summary.level.level + 1}{/if}
+				</p>
 			</div>
 		</div>
 		<dl class="stats">
@@ -62,6 +65,22 @@
 			<BadgeGrid earned={summary.badges} />
 		</Panel>
 		<div class="stack">
+			<Panel title="Trainingsplan">
+				<ul class="plan">
+					{#each data.profile.plan.current as item (item.exerciseId)}
+						<li><span>{item.name}</span><b class="num">{amount(item.target, item.unit)}</b></li>
+					{/each}
+				</ul>
+				{#if data.profile.plan.upcoming}
+					<p class="upcoming">
+						Ab {dayLabel(data.profile.plan.upcoming.validFrom)}:
+						{data.profile.plan.upcoming.items.map((item) => `${item.name} ${amount(item.target, item.unit)}`).join(' · ')}
+					</p>
+				{/if}
+				{#if summary.hunter.id === data.me.id}
+					<a class="planlink" href="/plan"><ClipboardList size={16} /> Plan ändern</a>
+				{/if}
+			</Panel>
 			<Panel title="Kalender">
 				<DayGrid days={data.profile.calendar} />
 			</Panel>
@@ -73,6 +92,40 @@
 </div>
 
 <style>
+	.plan {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.plan li {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 7px 0;
+		border-top: 1px solid var(--line-faint);
+	}
+
+	.plan li:first-child {
+		border-top: none;
+	}
+
+	.upcoming {
+		margin-top: 8px;
+		padding: 8px 10px;
+		border-left: 3px solid var(--gold);
+		background: rgba(245, 197, 66, 0.08);
+		font-size: 14px;
+	}
+
+	.planlink {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 10px;
+		font-size: 14px;
+	}
+
 	.page {
 		display: flex;
 		flex-direction: column;

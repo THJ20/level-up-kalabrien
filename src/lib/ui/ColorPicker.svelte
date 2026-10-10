@@ -32,13 +32,13 @@
 		border: 2px solid transparent;
 		background: var(--color);
 		cursor: pointer;
-		box-shadow: inset 0 0 0 3px #0b0614;
+		box-shadow: inset 0 0 0 3px var(--bg-deep);
 	}
 
 	button.active {
 		border-color: var(--text);
 		box-shadow:
-			inset 0 0 0 3px #0b0614,
+			inset 0 0 0 3px var(--bg-deep),
 			0 0 14px var(--color);
 	}
 </style>

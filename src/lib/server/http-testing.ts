@@ -25,7 +25,8 @@ export function createTestApp(nowIso = '2026-10-12T10:00:00Z'): TestApp {
 			avatarDir: mkdtempSync(join(tmpdir(), 'lu-avatars-')),
 			goLiveDate: '2026-10-12',
 			origin: 'https://lvl.test',
-			vapidSubject: 'https://lvl.test'
+			vapidSubject: 'https://lvl.test',
+			simulatedNow: null
 		},
 		{
 			clock,

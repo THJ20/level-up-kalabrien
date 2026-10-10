@@ -13,6 +13,7 @@ export const load: PageServerLoad = ({ locals, params, depends }) => {
 			profile: {
 				summary: profile.summary,
 				volume: profile.volume,
+				plan: profile.plan,
 				verdicts: profile.verdicts,
 				calendar: profile.timeline.map((day) => ({ date: day.date, status: day.status })),
 				missedDays: profile.timeline.filter((day) => day.status === 'missed').length,

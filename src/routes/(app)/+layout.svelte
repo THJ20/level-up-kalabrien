@@ -2,7 +2,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Activity, ChartColumn, Gavel, Swords, Trophy } from '@lucide/svelte';
+	import { Activity, Award, ChartColumn, Gavel, Swords, Trophy } from '@lucide/svelte';
 	import {
 		progressMessages,
 		warningMessages,
@@ -11,6 +11,7 @@
 	} from '#lib/client/progress.ts';
 	import { readJson, writeJson } from '#lib/client/storage.ts';
 	import { offlineQueue } from '#lib/client/queue.svelte.ts';
+	import { serverClock } from '#lib/client/server-clock.svelte.ts';
 	import Avatar from '#lib/ui/Avatar.svelte';
 	import SystemOverlay from '#lib/ui/SystemOverlay.svelte';
 
@@ -55,9 +56,19 @@
 		{ href: '/', label: 'Quest', icon: Swords },
 		{ href: '/statistik', label: 'Statistik', icon: ChartColumn },
 		{ href: '/rangliste', label: 'Rangliste', icon: Trophy },
+		{ href: '/erfolge', label: 'Erfolge', icon: Award },
 		{ href: '/feed', label: 'Feed', icon: Activity },
 		{ href: '/strafen', label: 'Strafen', icon: Gavel }
 	];
+
+	$effect(() => {
+		serverClock.offset = data.serverNow - Date.now();
+	});
+
+	// Farbschema des eingeloggten Spielers, auch nach einem Wechsel im Profil ohne Neuladen.
+	$effect(() => {
+		document.documentElement.dataset.theme = data.me.theme;
+	});
 
 	function isActive(href: string): boolean {
 		const path = page.url.pathname;
@@ -101,14 +112,14 @@
 
 <div class="shell">
 	<header class="topbar">
-		<a class="brand sys" href="/">Level Up <span>·</span> Kalabrien</a>
+		<a class="brand sys" href="/"><span class="logo" aria-hidden="true"></span>Level Up <span>·</span> Kalabrien</a>
 		<a class="me" href="/profil" aria-label="Profil und Einstellungen">
-			<Avatar name={data.me.name} color={data.me.color} size={34} />
+			<Avatar name={data.me.name} color={data.me.color} src={data.me.avatarUrl} size={34} />
 		</a>
 	</header>
 
 	<nav class="nav" aria-label="Hauptnavigation">
-		<a class="brand sys desktop-only" href="/">Level Up<br /><span>Kalabrien</span></a>
+		<a class="brand sys desktop-only" href="/"><span class="logo" aria-hidden="true"></span><span class="brand-text">Level Up<br /><span>Kalabrien</span></span></a>
 		{#each nav as item (item.href)}
 			{@const Icon = item.icon}
 			<a href={item.href} class:active={isActive(item.href)} aria-current={isActive(item.href) ? 'page' : undefined}>
@@ -122,7 +133,7 @@
 			</a>
 		{/each}
 		<a class="profile desktop-only" href="/profil" class:active={isActive('/profil')}>
-			<Avatar name={data.me.name} color={data.me.color} size={30} />
+			<Avatar name={data.me.name} color={data.me.color} src={data.me.avatarUrl} size={30} />
 			<span class="label">{data.me.name}</span>
 		</a>
 	</nav>
@@ -167,20 +178,30 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: calc(var(--safe-top) + 10px) 16px 10px;
-		background: linear-gradient(180deg, rgba(5, 3, 10, 0.96), rgba(5, 3, 10, 0.82));
+		background: linear-gradient(180deg, rgba(var(--deep-rgb), 0.96), rgba(var(--deep-rgb), 0.82));
 		backdrop-filter: blur(8px);
 		border-bottom: 1px solid var(--line-faint);
 	}
 
 	.brand {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
 		color: var(--text);
 		text-decoration: none;
 		font-size: 14px;
 		letter-spacing: 0.16em;
 	}
 
-	.brand span {
+	.brand span:not(.logo, .brand-text) {
 		color: var(--line);
+	}
+
+	.logo {
+		flex: none;
+		width: 30px;
+		height: 30px;
+		background: var(--logo) center / contain no-repeat;
 	}
 
 	.me {
@@ -196,9 +217,9 @@
 		right: 0;
 		bottom: 0;
 		display: grid;
-		grid-template-columns: repeat(5, 1fr);
+		grid-template-columns: repeat(6, 1fr);
 		padding: 6px 0 calc(var(--safe-bottom) + 8px);
-		background: rgba(8, 4, 16, 0.96);
+		background: rgba(var(--deep-rgb), 0.96);
 		backdrop-filter: blur(8px);
 		border-top: 1px solid var(--line-faint);
 	}
@@ -287,10 +308,16 @@
 		}
 
 		.nav .brand {
-			display: block !important;
+			display: flex !important;
+			gap: 12px;
 			margin: 0 8px 24px;
 			font-size: 16px;
 			line-height: 1.4;
+		}
+
+		.nav .brand .logo {
+			width: 44px;
+			height: 44px;
 		}
 
 		.nav a:not(.brand) {
@@ -303,7 +330,7 @@
 
 		.nav a.active:not(.brand) {
 			border-color: var(--line-dim);
-			background: rgba(164, 124, 255, 0.1);
+			background: rgba(var(--accent-rgb), 0.1);
 		}
 
 		.nav .profile {

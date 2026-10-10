@@ -1,11 +1,12 @@
 <script lang="ts">
+	import type { HunterRefView } from '#lib/shared/constants.ts';
 	import type { DayStatus } from '#lib/domain/index.ts';
 	import Avatar from '../Avatar.svelte';
 	import Panel from '../Panel.svelte';
 	import StatusChip from '../StatusChip.svelte';
 
 	interface Row {
-		hunter: { id: string; name: string; color: string };
+		hunter: HunterRefView;
 		status: DayStatus | null;
 		progress: number;
 	}
@@ -20,7 +21,7 @@
 		{#each rows as row (row.hunter.id)}
 			<li>
 				<a href="/hunter/{row.hunter.id}">
-					<Avatar name={row.hunter.name} color={row.hunter.color} size={30} />
+					<Avatar name={row.hunter.name} color={row.hunter.color} src={row.hunter.avatarUrl} size={30} />
 					<span class="name">{row.hunter.name}{row.hunter.id === meId ? ' (du)' : ''}</span>
 					<StatusChip status={row.status} progress={row.progress} />
 				</a>

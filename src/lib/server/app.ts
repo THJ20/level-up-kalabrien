@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { randomIndex } from '#lib/domain/index.ts';
 import { ensureAdminInvite } from './auth/invites';
 import { LoginThrottle } from './auth/throttle';
-import { systemClock, type Clock } from './clock';
+import { simulatedClock, systemClock, type Clock } from './clock';
 import { loadConfig, type AppConfig } from './config';
 import { createChangeBus, type Notifier, type ServiceContext } from './context';
 import { openDatabase } from './db/client';
@@ -33,8 +33,9 @@ export interface AppDeps {
 
 /** Baut die laufende Anwendung: Datenbank, Dienste, Push, Admin-Einladung, Nachholen und Zeitsteuerung. */
 export function createApp(config: AppConfig, deps: AppDeps = {}): App {
-	const clock = deps.clock ?? systemClock;
 	const log = deps.log ?? ((line: string) => console.log(line));
+	const clock = deps.clock ?? (config.simulatedNow ? simulatedClock(config.simulatedNow) : systemClock);
+	if (!deps.clock && config.simulatedNow) log(`Achtung: simulierte Uhrzeit ab ${config.simulatedNow.toISOString()}`);
 	if (config.databasePath !== ':memory:') mkdirSync(dirname(config.databasePath), { recursive: true });
 
 	const db = openDatabase(config.databasePath, clock.now());

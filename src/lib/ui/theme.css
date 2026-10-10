@@ -1,4 +1,9 @@
-/* Shadow Monarch: fast schwarzer Grund mit violettem Schimmer, Panels mit Eckklammern, Akzent Violett. */
+/*
+ * Zwei Farbschemata, gewählt pro Spieler über data-theme am <html>.
+ * Shadow Monarch: fast schwarzer Grund mit violettem Schimmer, Akzent Violett.
+ * Gate: schwarzer Grund mit warmem Schimmer, Akzent Orange.
+ * Komponenten nutzen nur diese Variablen, nie feste Akzentfarben.
+ */
 :root {
 	--bg: #05030a;
 	--bg-glow:
@@ -26,6 +31,18 @@
 	--unscored: #2a2140;
 	--gold: #f5c542;
 
+	/* Akzent als RGB für Transparenzen: rgba(var(--accent-rgb), 0.1) */
+	--accent-rgb: 164, 124, 255;
+	--glow-rgb: 130, 80, 255;
+	--deep-rgb: 5, 3, 10;
+	--panel-rgb: 20, 10, 36;
+	--shade-rgb: 2, 1, 6;
+	--bg-deep: #0b0614;
+	--rank-core: #2b1257;
+	--btn-primary: linear-gradient(180deg, #8d5cff, #6b3fe0);
+	--btn-primary-text: #ffffff;
+	--logo: url('/logo/logo-monarch.webp');
+
 	--f-sys: 'Oxanium', 'Segoe UI', system-ui, sans-serif;
 	--f-body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
 
@@ -37,6 +54,38 @@
 	--safe-top: env(safe-area-inset-top, 0px);
 
 	color-scheme: dark;
+}
+
+:root[data-theme='gate'] {
+	--bg: #070504;
+	--bg-glow:
+		radial-gradient(90% 45% at 50% 0%, rgba(150, 62, 12, 0.42) 0%, transparent 65%),
+		radial-gradient(60% 40% at 90% 100%, rgba(96, 36, 8, 0.45) 0%, transparent 70%);
+	--panel: rgba(26, 15, 8, 0.84);
+	--panel-solid: #1a0f08;
+	--panel-raised: #24160c;
+	--line: #ff8a3d;
+	--line-dim: #8f4a1c;
+	--line-faint: rgba(255, 138, 61, 0.16);
+	--glow: rgba(255, 122, 50, 0.5);
+	--glow-soft: rgba(255, 110, 40, 0.2);
+	--text: #fdf2e9;
+	--dim: #c7ab97;
+	--muted: #95806f;
+	--accent-text: #ffc49a;
+	--track: rgba(255, 138, 61, 0.14);
+	--unscored: #2e2017;
+
+	--accent-rgb: 255, 138, 61;
+	--glow-rgb: 255, 110, 40;
+	--deep-rgb: 7, 5, 4;
+	--panel-rgb: 26, 15, 8;
+	--shade-rgb: 4, 2, 1;
+	--bg-deep: #120a05;
+	--rank-core: #5a2608;
+	--btn-primary: linear-gradient(180deg, #ff9a4f, #e2621c);
+	--btn-primary-text: #1d0b02;
+	--logo: url('/logo/logo-gate.webp');
 }
 
 *,
@@ -128,7 +177,7 @@ textarea {
 	padding: 8px 16px;
 	border: 1px solid var(--line-dim);
 	border-radius: var(--radius);
-	background: rgba(164, 124, 255, 0.08);
+	background: rgba(var(--accent-rgb), 0.08);
 	color: var(--text);
 	font-family: var(--f-sys);
 	font-weight: 600;
@@ -157,7 +206,8 @@ textarea {
 }
 
 .btn-primary {
-	background: linear-gradient(180deg, #8d5cff, #6b3fe0);
+	background: var(--btn-primary);
+	color: var(--btn-primary-text);
 	border-color: var(--line);
 	box-shadow: 0 0 18px var(--glow-soft);
 }
@@ -209,7 +259,7 @@ textarea.input {
 	padding: 10px 12px;
 	border: 1px solid var(--line-dim);
 	border-radius: var(--radius);
-	background: rgba(5, 3, 10, 0.6);
+	background: rgba(var(--deep-rgb), 0.6);
 	color: var(--text);
 }
 

@@ -15,20 +15,48 @@ describe('Feed-Texte', () => {
 		const text = describeFeedItem(
 			item('activity', {
 				date: '2026-10-12',
-				reps: { pushups: 40, squats: 20, situps: 0 },
+				quest: [
+					{ exerciseId: 'pushups', name: 'Liegestütze', unit: 'reps', value: 40 },
+					{ exerciseId: 'plank', name: 'Plank', unit: 'minutes', value: 3 },
+					{ exerciseId: 'run', name: 'Laufen/Joggen', unit: 'km', value: 2.5 }
+				],
 				bonus: [{ exercise: 'Laufen/Joggen', minutes: 30, reps: null, effort: 'hard', distanceKm: 5, points: 210 }]
 			}),
 			'me'
 		);
-		expect(text.text).toBe('Niklas hat 40 Liegestütze, 20 Kniebeugen und Laufen/Joggen (30 Min., +210 BP) eingetragen.');
+		expect(text.text).toBe(
+			'Niklas hat 40 Liegestütze, Plank (3 Min.), Laufen/Joggen (2,5 km) und Laufen/Joggen (30 Min., +210 BP) eingetragen.'
+		);
 	});
 
 	it('nennt den Tag bei nachgetragener Aktivität', () => {
 		const text = describeFeedItem(
-			item('activity', { date: '2026-10-10', reps: { pushups: 100, squats: 0, situps: 0 }, bonus: [] }),
+			item('activity', {
+				date: '2026-10-10',
+				quest: [{ exerciseId: 'pushups', name: 'Liegestütze', unit: 'reps', value: 100 }],
+				bonus: []
+			}),
 			'me'
 		);
 		expect(text.text).toBe('Niklas hat 100 Liegestütze für Sa, 10.10. eingetragen.');
+	});
+
+	it('meldet geänderte Trainingspläne mit Gültigkeit und Übungen', () => {
+		const payload = {
+			validFrom: '2026-10-13',
+			items: [
+				{ name: 'Liegestütze', unit: 'reps', target: 80 },
+				{ name: 'Plank', unit: 'minutes', target: 3 }
+			]
+		};
+		expect(describeFeedItem(item('plan_changed', payload), 'me')).toEqual({
+			text: 'Niklas hat den Trainingsplan geändert, gilt ab Di, 13.10.',
+			detail: 'Liegestütze 80 Wdh. · Plank 3 Min.',
+			tone: 'accent'
+		});
+		expect(describeFeedItem(item('plan_changed', { ...payload, validFrom: '2026-10-09' }, 'me'), 'me').text).toBe(
+			'Du hast deinen Trainingsplan geändert.'
+		);
 	});
 
 	it('spricht den Betrachter mit du an', () => {
