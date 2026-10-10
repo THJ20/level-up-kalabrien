@@ -16,8 +16,22 @@
 	let { data, children } = $props();
 
 	let queue = $state<SystemMessage[]>([]);
+	let hydrated = $state(false);
+	const queueKey = $derived(`lu:queue:${data.me.id}`);
+
+	// Offene Meldungen überleben ein Neuladen der Seite.
+	$effect(() => {
+		if (hydrated) return;
+		queue = readJson<SystemMessage[]>(queueKey) ?? [];
+		hydrated = true;
+	});
 
 	$effect(() => {
+		if (hydrated) writeJson(queueKey, queue);
+	});
+
+	$effect(() => {
+		if (!hydrated) return;
 		const progressKey = `lu:progress:${data.me.id}`;
 		const seenKey = `lu:seen-warnings:${data.me.id}`;
 		const progress: ProgressSnapshot = data.progress;

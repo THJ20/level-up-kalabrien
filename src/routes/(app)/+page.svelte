@@ -5,8 +5,16 @@
 	import DayNav from '#lib/ui/quest/DayNav.svelte';
 	import HunterCard from '#lib/ui/quest/HunterCard.svelte';
 	import QuestPanel from '#lib/ui/quest/QuestPanel.svelte';
+	import FeedEntry from '#lib/ui/FeedEntry.svelte';
+	import Panel from '#lib/ui/Panel.svelte';
 
 	let { data } = $props();
+
+	let now = $state(new Date());
+	$effect(() => {
+		const timer = setInterval(() => (now = new Date()), 60_000);
+		return () => clearInterval(timer);
+	});
 </script>
 
 <svelte:head><title>Quest · Level Up</title></svelte:head>
@@ -38,6 +46,16 @@
 			</div>
 			<aside class="side">
 				<BoardPanel rows={data.board} meId={data.summary.hunter.id} />
+				{#if data.feed.length > 0}
+					<Panel title="Neueste Aktivität">
+						<div class="feed">
+							{#each data.feed as item (item.id)}
+								<FeedEntry {item} viewerId={data.summary.hunter.id} {now} compact />
+							{/each}
+						</div>
+						<a class="more" href="/feed">Zum Feed</a>
+					</Panel>
+				{/if}
 			</aside>
 		</div>
 	{:else}
@@ -68,6 +86,18 @@
 		flex-direction: column;
 		gap: 16px;
 		min-width: 0;
+	}
+
+	.feed {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.more {
+		display: inline-block;
+		margin-top: 10px;
+		font-size: 14px;
 	}
 
 	.ended {
