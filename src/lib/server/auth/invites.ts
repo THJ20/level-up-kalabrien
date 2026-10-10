@@ -3,6 +3,7 @@ import { todayOf, type ServiceContext } from '../context';
 import { hunters, invites } from '../db/schema';
 import { ServiceError } from '../errors';
 import { appendEvent } from '../feed';
+import { ensureStartPlan } from '../plans';
 import {
 	assertNameAvailable,
 	toProfile,
@@ -104,6 +105,7 @@ export async function redeemInvite(
 			})
 			.run();
 		ctx.db.update(invites).set({ usedAt: now, usedBy: id }).where(eq(invites.id, invite.id)).run();
+		ensureStartPlan(ctx, id);
 		appendEvent(ctx, id, 'joined', {});
 		const row = ctx.db.select().from(hunters).where(eq(hunters.id, id)).get();
 		return { hunter: toProfile(row!), session: createSession(ctx, id) };

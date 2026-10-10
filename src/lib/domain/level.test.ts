@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { levelForQuests, levelProgress, questsForLevel, rankForLevel } from './level';
+import { S_RANK_QUESTS, levelForQuests, levelProgress, questThreshold, questsForLevel, rankForLevel } from './level';
 
 describe('Level-Kurve', () => {
 	it.each([
@@ -9,14 +9,14 @@ describe('Level-Kurve', () => {
 		[13, 10],
 		[42, 19],
 		[43, 20],
-		[84, 29],
-		[85, 30],
-		[135, 39],
-		[136, 40],
-		[194, 49],
-		[195, 50],
-		[201, 50],
-		[202, 51]
+		[82, 29],
+		[83, 30],
+		[133, 39],
+		[134, 40],
+		[191, 49],
+		[192, 50],
+		[198, 50],
+		[199, 51]
 	])('ergibt nach %i erfüllten Quests Level %i', (quests, level) => {
 		expect(levelForQuests(quests)).toBe(level);
 	});
@@ -28,8 +28,10 @@ describe('Level-Kurve', () => {
 		expect(late).toBeGreaterThan(6);
 	});
 
-	it('erreicht den S-Rang genau mit Quest 195', () => {
-		expect(questsForLevel(50)).toBe(195);
+	it('erreicht den S-Rang genau mit Quest 192, also 7 Tage Puffer bei 199 Tagen', () => {
+		expect(S_RANK_QUESTS).toBe(192);
+		expect(questsForLevel(50)).toBe(192);
+		expect(questThreshold(51)).toBe(199);
 	});
 });
 
@@ -68,9 +70,18 @@ describe('Fortschritt', () => {
 	});
 
 	it('ist auf Level 51 voll', () => {
-		const progress = levelProgress(202);
+		const progress = levelProgress(199);
 		expect(progress.level).toBe(51);
 		expect(progress.nextLevelXp).toBeNull();
+		expect(progress.xpToNext).toBeNull();
 		expect(progress.progress).toBe(1);
+	});
+
+	it('nennt die XP bis zum nächsten Level in ganzen Quests', () => {
+		expect(levelProgress(0).xpToNext).toBe(100);
+		expect(levelProgress(12).xpToNext).toBe(100);
+		expect(levelProgress(13).xpToNext).toBe(300);
+		expect(levelProgress(191).xpToNext).toBe(100);
+		expect(levelProgress(192).xpToNext).toBe(700);
 	});
 });

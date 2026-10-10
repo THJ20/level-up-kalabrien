@@ -32,7 +32,7 @@ describe('Bonus-Einträge', () => {
 		const { ctx, tobias, byName } = setup();
 		const run = addBonusEntry(ctx, tobias, {
 			exerciseId: byName('Laufen/Joggen').id,
-			date: '2026-10-09',
+			date: '2026-10-12',
 			minutes: 30,
 			effort: 'moderate',
 			distanceKm: 5.2
@@ -40,12 +40,12 @@ describe('Bonus-Einträge', () => {
 		expect(run).toMatchObject({ bonusPoints: 150, distanceKm: 5.2, exercise: { name: 'Laufen/Joggen' } });
 		const pullups = addBonusEntry(ctx, tobias, {
 			exerciseId: byName('Klimmzüge').id,
-			date: '2026-10-09',
+			date: '2026-10-12',
 			reps: 20,
 			effort: 'max'
 		});
 		expect(pullups.bonusPoints).toBe(12);
-		expect(hunterTimeline(ctx, tobias)[0].bonusPoints).toBe(162);
+		expect(hunterTimeline(ctx, tobias).find((day) => day.date === '2026-10-12')?.bonusPoints).toBe(162);
 		expect(listFeed(ctx, tobias)[0].payload).toMatchObject({
 			bonus: [
 				{ exercise: 'Laufen/Joggen', points: 150 },
@@ -56,7 +56,7 @@ describe('Bonus-Einträge', () => {
 
 	it('prüfen Eingaben gegen die Übung', () => {
 		const { ctx, tobias, niklas, byName } = setup();
-		const date = '2026-10-09';
+		const date = '2026-10-12';
 		expect(() =>
 			addBonusEntry(ctx, tobias, { exerciseId: byName('Radfahren').id, date, effort: 'hard' })
 		).toThrow(invalidInput);
@@ -84,20 +84,20 @@ describe('Bonus-Einträge', () => {
 		const sprints = createExercise(ctx, niklas, { name: 'Sprints', kind: 'reps', secondsPerRep: 10 });
 		const entry = addBonusEntry(ctx, tobias, {
 			exerciseId: sprints.id,
-			date: '2026-10-09',
+			date: '2026-10-12',
 			reps: 6,
 			effort: 'hard'
 		});
 		expect(entry.bonusPoints).toBe(7);
 		updateExercise(ctx, niklas, sprints.id, { secondsPerRep: 5 });
-		expect(listBonusEntries(ctx, tobias, '2026-10-09')[0].bonusPoints).toBe(7);
+		expect(listBonusEntries(ctx, tobias, '2026-10-12')[0].bonusPoints).toBe(7);
 	});
 
 	it('gehören ihrem Hunter und sind idempotent', () => {
 		const { ctx, tobias, niklas, byName } = setup();
 		const input = {
 			exerciseId: byName('Burpees').id,
-			date: '2026-10-09',
+			date: '2026-10-12',
 			reps: 30,
 			effort: 'hard' as const,
 			clientId: 'b-1'
@@ -109,7 +109,7 @@ describe('Bonus-Einträge', () => {
 		);
 		expect(updateBonusEntry(ctx, tobias, entry.id, { reps: 15, effort: 'max' }).bonusPoints).toBe(9);
 		deleteBonusEntry(ctx, tobias, entry.id);
-		expect(listBonusEntries(ctx, tobias, '2026-10-09')).toEqual([]);
+		expect(listBonusEntries(ctx, tobias, '2026-10-12')).toEqual([]);
 	});
 });
 

@@ -37,7 +37,7 @@ describe('Einladungen', () => {
 		const ctx = createTestContext();
 		const { token } = createInvite(ctx, null);
 		const { hunter, session } = await redeemInvite(ctx, token, registration());
-		expect(hunter).toMatchObject({ name: 'Tobias', role: 'hunter', active: true, registeredOn: '2026-10-09' });
+		expect(hunter).toMatchObject({ name: 'Tobias', role: 'hunter', active: true, registeredOn: '2026-10-12' });
 		expect(validateSession(ctx, session.token)?.hunter.id).toBe(hunter.id);
 		expect(listFeed(ctx, hunter.id).map((item) => item.type)).toEqual(['joined']);
 	});
@@ -164,11 +164,11 @@ describe('Login', () => {
 
 describe('Go-live-Datum', () => {
 	it('wird einmal gesetzt und danach nicht mehr verändert', () => {
-		const ctx = createTestContext('2026-10-14T08:00:00Z');
+		const ctx = createTestContext('2026-10-17T08:00:00Z');
 		ctx.db.delete(settings).run();
-		expect(ensureGoLiveDate(ctx)).toBe('2026-10-14');
+		expect(ensureGoLiveDate(ctx)).toBe('2026-10-17');
 		ctx.clock.advance(3 * DAY);
-		expect(ensureGoLiveDate(ctx, '2026-11-01')).toBe('2026-10-14');
-		expect(getGoLiveDate(ctx)).toBe('2026-10-14');
+		expect(ensureGoLiveDate(ctx, '2026-11-01')).toBe('2026-10-17');
+		expect(getGoLiveDate(ctx)).toBe('2026-10-17');
 	});
 });

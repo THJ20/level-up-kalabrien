@@ -1,17 +1,9 @@
 import { and, desc, eq, inArray, lt } from 'drizzle-orm';
-import {
-	EXERCISES,
-	emptyTotals,
-	localDateOf,
-	minutesOfDay,
-	type Effort,
-	type ExerciseTotals,
-	type LocalDate
-} from '#lib/domain/index.ts';
+import { localDateOf, minutesOfDay, type Effort, type LocalDate, type PlanUnit } from '#lib/domain/index.ts';
 import type { ServiceContext } from './context';
 import { feedEvents, hunters, reactions } from './db/schema';
 import { invalid, notFound } from './errors';
-import type { HunterRef } from './hunters';
+import { refOf, type HunterRef } from './hunters';
 import { REACTIONS, type Reaction } from '../shared/constants';
 
 export const FEED_EVENT_TYPES = [
@@ -24,7 +16,8 @@ export const FEED_EVENT_TYPES = [
 	'missed',
 	'sick',
 	'missed_lifted',
-	'verdict'
+	'verdict',
+	'plan_changed'
 ] as const;
 export type FeedEventType = (typeof FEED_EVENT_TYPES)[number];
 
@@ -39,9 +32,16 @@ export interface BonusActivity {
 	points: number;
 }
 
+export interface QuestActivity {
+	exerciseId: string;
+	name: string;
+	unit: PlanUnit;
+	value: number;
+}
+
 export interface ActivityPayload {
 	date: LocalDate;
-	reps: ExerciseTotals;
+	quest: QuestActivity[];
 	bonus: BonusActivity[];
 }
 
@@ -82,14 +82,19 @@ function hourBucket(ctx: ServiceContext, hunterId: string, date: LocalDate): str
 export function recordActivity(
 	ctx: ServiceContext,
 	hunterId: string,
-	activity: { date: LocalDate; reps?: Partial<ExerciseTotals>; bonus?: BonusActivity }
+	activity: { date: LocalDate; quest?: QuestActivity; bonus?: BonusActivity }
 ): void {
 	const bucket = hourBucket(ctx, hunterId, activity.date);
 	const existing = ctx.db.select().from(feedEvents).where(eq(feedEvents.bucket, bucket)).get();
 	const payload: ActivityPayload = existing
 		? (JSON.parse(existing.payload) as ActivityPayload)
-		: { date: activity.date, reps: emptyTotals(), bonus: [] };
-	for (const exercise of EXERCISES) payload.reps[exercise] += activity.reps?.[exercise] ?? 0;
+		: { date: activity.date, quest: [], bonus: [] };
+	if (activity.quest) {
+		const { exerciseId, unit, value } = activity.quest;
+		const same = payload.quest.find((entry) => entry.exerciseId === exerciseId && entry.unit === unit);
+		if (same) same.value = Math.round((same.value + value) * 1000) / 1000;
+		else payload.quest.push({ ...activity.quest });
+	}
 	if (activity.bonus) payload.bonus.push(activity.bonus);
 
 	if (existing) {
@@ -124,7 +129,7 @@ export function listFeed(
 ): FeedItem[] {
 	const limit = Math.min(Math.max(options.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
 	const rows = ctx.db
-		.select({ event: feedEvents, hunter: { id: hunters.id, name: hunters.name, color: hunters.color } })
+		.select({ event: feedEvents, hunter: hunters })
 		.from(feedEvents)
 		.innerJoin(hunters, eq(feedEvents.hunterId, hunters.id))
 		.where(options.before !== undefined ? lt(feedEvents.createdAt, new Date(options.before)) : undefined)
@@ -152,7 +157,7 @@ export function listFeed(
 			id: event.id,
 			type: event.type as FeedEventType,
 			createdAt: event.createdAt,
-			hunter,
+			hunter: refOf(hunter),
 			payload: JSON.parse(event.payload) as Record<string, unknown>,
 			reactions: counts,
 			myReactions: REACTIONS.filter((reaction) =>

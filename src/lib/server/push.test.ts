@@ -30,14 +30,15 @@ describe('Konfiguration', () => {
 		expect(loadConfig({})).toEqual({
 			databasePath: 'data/app.db',
 			backupDir: join('data', 'backups'),
+			avatarDir: join('data', 'avatars'),
 			goLiveDate: null,
 			origin: null,
 			vapidSubject: 'mailto:level-up@example.invalid'
 		});
-		expect(loadConfig({ ORIGIN: 'https://levelup.example.de/', GO_LIVE_DATE: '2026-10-14' })).toMatchObject({
+		expect(loadConfig({ ORIGIN: 'https://levelup.example.de/', GO_LIVE_DATE: '2026-10-17' })).toMatchObject({
 			origin: 'https://levelup.example.de',
 			vapidSubject: 'https://levelup.example.de',
-			goLiveDate: '2026-10-14'
+			goLiveDate: '2026-10-17'
 		});
 		expect(() => loadConfig({ GO_LIVE_DATE: '14.10.2026' })).toThrow(/GO_LIVE_DATE/);
 	});
@@ -114,30 +115,30 @@ describe('PushNotifier', () => {
 
 describe('Erinnerungen', () => {
 	it('erinnern abends genau einmal an eine offene Daily Quest', () => {
-		const ctx = createTestContext('2026-10-12T17:59:00Z');
-		const tobias = insertHunter(ctx, 'Tobias', { registeredOn: '2026-10-09' });
-		const niklas = insertHunter(ctx, 'Niklas', { registeredOn: '2026-10-09' });
-		const ramzy = insertHunter(ctx, 'Ramzy', { registeredOn: '2026-10-09' });
-		seedFullDay(ctx, niklas, '2026-10-12');
-		reportSick(ctx, ramzy, '2026-10-12');
+		const ctx = createTestContext('2026-10-15T17:59:00Z');
+		const tobias = insertHunter(ctx, 'Tobias', { registeredOn: '2026-10-12' });
+		const niklas = insertHunter(ctx, 'Niklas', { registeredOn: '2026-10-12' });
+		const ramzy = insertHunter(ctx, 'Ramzy', { registeredOn: '2026-10-12' });
+		seedFullDay(ctx, niklas, '2026-10-15');
+		reportSick(ctx, ramzy, '2026-10-15');
 
 		expect(sendEveningReminders(ctx)).toEqual([]);
-		ctx.clock.set('2026-10-12T18:00:00Z');
+		ctx.clock.set('2026-10-15T18:00:00Z');
 		expect(sendEveningReminders(ctx)).toEqual([tobias]);
 		expect(ctx.notifier.sent.at(-1)).toMatchObject({ hunterIds: [tobias], kind: 'reminder' });
 		ctx.clock.advance(60_000);
 		expect(sendEveningReminders(ctx)).toEqual([]);
 
-		ctx.clock.set('2026-10-13T18:00:00Z');
+		ctx.clock.set('2026-10-16T18:00:00Z');
 		updateSettings(ctx, tobias, { reminderEnabled: false });
 		expect(sendEveningReminders(ctx).sort()).toEqual([niklas, ramzy].sort());
 	});
 
 	it('erinnert an offene Abstimmungen', () => {
-		const ctx = createTestContext('2026-10-10T16:00:00Z');
-		insertHunter(ctx, 'Tobias', { registeredOn: '2026-10-09' });
-		const niklas = insertHunter(ctx, 'Niklas', { registeredOn: '2026-10-09' });
-		seedFullDay(ctx, niklas, '2026-10-09');
+		const ctx = createTestContext('2026-10-13T16:00:00Z');
+		insertHunter(ctx, 'Tobias', { registeredOn: '2026-10-12' });
+		const niklas = insertHunter(ctx, 'Niklas', { registeredOn: '2026-10-12' });
+		seedFullDay(ctx, niklas, '2026-10-12');
 		evaluateAllHunters(ctx);
 		expect(sendVoteReminders(ctx)).toEqual([niklas]);
 		expect(ctx.notifier.sent.at(-1)).toMatchObject({ hunterIds: [niklas], kind: 'vote' });

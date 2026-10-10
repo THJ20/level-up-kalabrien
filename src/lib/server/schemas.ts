@@ -1,9 +1,10 @@
 import { z } from 'zod';
-import { EFFORTS, EXERCISES, isLocalDate } from '#lib/domain/index.ts';
+import { EFFORTS, PLAN_UNITS, isLocalDate } from '#lib/domain/index.ts';
+import { THEMES } from '../shared/constants';
 import { REACTIONS } from './feed';
 
 export const LocalDateSchema = z.string().refine(isLocalDate, 'Ungültiges Datum');
-export const ExerciseSchema = z.enum(EXERCISES);
+export const UnitSchema = z.enum(PLAN_UNITS);
 export const EffortSchema = z.enum(EFFORTS);
 export const ReactionSchema = z.enum(REACTIONS);
 
@@ -12,17 +13,20 @@ const nullableNumber = z.number().nullable().optional();
 
 export const SetBody = z.object({
 	date: LocalDateSchema,
-	exercise: ExerciseSchema,
-	reps: int,
+	exerciseId: z.string().max(100),
+	value: z.number(),
 	clientId: z.string().max(100).optional()
 });
 
-export const SetPatch = z.object({ reps: int });
+export const SetPatch = z.object({ value: z.number() });
 
 export const ProfilePatch = z.object({
-	name: z.string().optional(),
-	color: z.string().optional()
+	displayName: z.string().max(100).nullable().optional(),
+	color: z.string().optional(),
+	theme: z.enum(THEMES).optional()
 });
+
+export const AvatarPresetBody = z.object({ preset: z.string().max(10) });
 
 export const SettingsPatch = z.object({
 	pushEnabled: z.boolean().optional(),
@@ -41,6 +45,19 @@ export const ExerciseBody = z.object({
 });
 
 export const ExercisePatch = ExerciseBody.omit({ kind: true }).partial();
+
+export const PlanBody = z.object({
+	items: z
+		.array(
+			z.object({
+				exerciseId: z.string().max(100).optional(),
+				newExercise: ExerciseBody.optional(),
+				unit: UnitSchema,
+				target: z.number()
+			})
+		)
+		.max(30)
+});
 
 export const BonusBody = z.object({
 	exerciseId: z.string(),

@@ -1,5 +1,7 @@
 export * from './challenge';
+export * from './plan';
 export * from './quest';
+export * from './plan-import';
 export * from './bonus';
 export * from './timeline';
 export * from './streak';

@@ -1,7 +1,5 @@
 import { and, eq } from 'drizzle-orm';
 import {
-	EXERCISES,
-	QUEST_TARGET,
 	challengeDayNumber,
 	daysUntilDeparture,
 	fulfilledDays,
@@ -9,14 +7,15 @@ import {
 	levelProgress,
 	streaks,
 	totalBonusPoints,
-	volumeTotals,
+	volumeOf,
 	type DayStatus,
 	type DaySummary,
-	type ExerciseTotals,
 	type LevelProgress,
 	type LocalDate,
+	type PlanUnit,
 	type Rank,
-	type StreakInfo
+	type StreakInfo,
+	type Volume
 } from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
 import { sickNotes } from './db/schema';
@@ -24,8 +23,9 @@ import { invalid } from './errors';
 import { listHunterBadges } from './badges';
 import { listBonusEntries, type BonusEntryView } from './bonus';
 import { getHunter, listActiveHunters, toRef, type HunterProfile, type HunterRef } from './hunters';
-import { listSets, type QuestSetRow } from './quest';
-import { hunterTimeline } from './records';
+import { planOverview, type PlanOverview } from './plans';
+import { listSets, type QuestSetView } from './quest';
+import { hunterTimeline, loadBonusEntries } from './records';
 import { listVerdicts, openVotesAwaiting, type VerdictView } from './votes';
 
 export interface HunterSummary {
@@ -44,8 +44,7 @@ export interface HunterSummary {
 export interface BoardRow {
 	hunter: HunterRef;
 	status: DayStatus | null;
-	totals: ExerciseTotals;
-	/** Summe der auf 100 gekappten Wiederholungen, 0 bis 300. */
+	/** Tagesfortschritt 0 bis 1. */
 	progress: number;
 }
 
@@ -64,9 +63,27 @@ export interface LeaderboardRow {
 export interface StatsDay {
 	date: LocalDate;
 	status: DayStatus;
-	totals: ExerciseTotals;
+	/** Planerfüllung 0 bis 1. */
+	progress: number;
+	reps: number;
+	minutes: number;
+	km: number;
+	/** Daily-Quest-Wert je Übung, Schlüssel `übungs-id:einheit`. */
+	byExercise: Record<string, number>;
 	bonusPoints: number;
 	overtimePoints: number;
+}
+
+export interface StatsExercise {
+	key: string;
+	name: string;
+	unit: PlanUnit;
+}
+
+export interface StatsSeries {
+	hunter: HunterRef;
+	days: StatsDay[];
+	exercises: StatsExercise[];
 }
 
 export function hunterSummary(ctx: ServiceContext, hunterId: string): HunterSummary {
@@ -87,16 +104,11 @@ export function hunterSummary(ctx: ServiceContext, hunterId: string): HunterSumm
 	};
 }
 
-function cappedProgress(totals: ExerciseTotals): number {
-	return EXERCISES.reduce((sum, exercise) => sum + Math.min(totals[exercise], QUEST_TARGET), 0);
-}
-
 export function todayBoard(ctx: ServiceContext): BoardRow[] {
 	const today = todayOf(ctx);
 	return listActiveHunters(ctx).map((hunter) => {
 		const day = hunterTimeline(ctx, hunter.id, today).find((entry) => entry.date === today);
-		const totals = day?.totals ?? { pushups: 0, squats: 0, situps: 0 };
-		return { hunter: toRef(hunter), status: day?.status ?? null, totals, progress: cappedProgress(totals) };
+		return { hunter: toRef(hunter), status: day?.status ?? null, progress: day?.progress ?? 0 };
 	});
 }
 
@@ -136,15 +148,22 @@ export function leaderboard(
 	};
 }
 
-export function hunterProfile(
-	ctx: ServiceContext,
-	hunterId: string
-): { summary: HunterSummary; timeline: DaySummary[]; volume: ExerciseTotals; verdicts: VerdictView[] } {
+export interface HunterProfileView {
+	summary: HunterSummary;
+	timeline: DaySummary[];
+	volume: Volume;
+	plan: Pick<PlanOverview, 'current' | 'upcoming'>;
+	verdicts: VerdictView[];
+}
+
+export function hunterProfile(ctx: ServiceContext, hunterId: string): HunterProfileView {
 	const timeline = hunterTimeline(ctx, hunterId);
+	const plan = planOverview(ctx, hunterId);
 	return {
 		summary: hunterSummary(ctx, hunterId),
 		timeline,
-		volume: volumeTotals(timeline),
+		volume: volumeOf(timeline, loadBonusEntries(ctx, hunterId)),
+		plan: { current: plan.current, upcoming: plan.upcoming },
 		verdicts: listVerdicts(ctx, { hunterId })
 	};
 }
@@ -153,7 +172,7 @@ export function dayDetail(
 	ctx: ServiceContext,
 	hunterId: string,
 	date: LocalDate
-): { day: DaySummary | null; sets: QuestSetRow[]; sickReportedAt: Date | null; bonus: BonusEntryView[] } {
+): { day: DaySummary | null; sets: QuestSetView[]; sickReportedAt: Date | null; bonus: BonusEntryView[] } {
 	if (!isLocalDate(date)) throw invalid('Ungültiges Datum.');
 	getHunter(ctx, hunterId);
 	const sick = ctx.db
@@ -169,26 +188,45 @@ export function dayDetail(
 	};
 }
 
+function toStatsDay(day: DaySummary, exercises: Map<string, StatsExercise>): StatsDay {
+	const stats: StatsDay = {
+		date: day.date,
+		status: day.status,
+		progress: day.progress,
+		reps: 0,
+		minutes: 0,
+		km: 0,
+		byExercise: {},
+		bonusPoints: day.status === 'warmup' ? 0 : day.bonusPoints,
+		overtimePoints: day.status === 'warmup' ? 0 : day.overtimePoints
+	};
+	for (const item of day.plan) {
+		const value = day.totals[item.exerciseId] ?? 0;
+		const key = `${item.exerciseId}:${item.unit}`;
+		if (!exercises.has(key)) exercises.set(key, { key, name: item.name, unit: item.unit });
+		if (value <= 0) continue;
+		stats[item.unit] += value;
+		stats.byExercise[key] = value;
+	}
+	stats.km = Math.round(stats.km * 10) / 10;
+	return stats;
+}
+
 export function stats(
 	ctx: ServiceContext,
 	query: { hunterIds?: string[]; from: LocalDate; to: LocalDate }
-): { hunter: HunterRef; days: StatsDay[] }[] {
+): StatsSeries[] {
 	if (!isLocalDate(query.from) || !isLocalDate(query.to) || query.from > query.to) {
 		throw invalid('Der Zeitraum ist ungültig.');
 	}
 	const wanted = query.hunterIds ? new Set(query.hunterIds) : null;
 	return listActiveHunters(ctx)
 		.filter((hunter) => wanted === null || wanted.has(hunter.id))
-		.map((hunter) => ({
-			hunter: toRef(hunter),
-			days: hunterTimeline(ctx, hunter.id)
+		.map((hunter) => {
+			const exercises = new Map<string, StatsExercise>();
+			const days = hunterTimeline(ctx, hunter.id)
 				.filter((day) => inRange(day.date, query.from, query.to))
-				.map((day) => ({
-					date: day.date,
-					status: day.status,
-					totals: day.totals,
-					bonusPoints: day.bonusPoints,
-					overtimePoints: day.overtimePoints
-				}))
-		}));
+				.map((day) => toStatsDay(day, exercises));
+			return { hunter: toRef(hunter), days, exercises: [...exercises.values()] };
+		});
 }

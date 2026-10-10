@@ -1,5 +1,6 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
 import {
+	CORE_EXERCISES,
 	EFFORTS,
 	isValidBonusReps,
 	isValidMinutes,
@@ -77,7 +78,7 @@ function toCatalogExercise(row: typeof exercises.$inferSelect): CatalogExercise 
 	};
 }
 
-function getExercise(ctx: ServiceContext, id: string): CatalogExercise {
+export function getExercise(ctx: ServiceContext, id: string): CatalogExercise {
 	const row = ctx.db.select().from(exercises).where(eq(exercises.id, id)).get();
 	if (!row) throw notFound('Diese Übung gibt es nicht.');
 	return toCatalogExercise(row);
@@ -175,6 +176,7 @@ export function updateExercise(
 
 export function archiveExercise(ctx: ServiceContext, hunterId: string, id: string): CatalogExercise {
 	requireEditableExercise(ctx, hunterId, id);
+	if (CORE_EXERCISES.some((core) => core.id === id)) throw forbidden('Die Kernübungen bleiben im Katalog.');
 	ctx.db.update(exercises).set({ archived: true }).where(eq(exercises.id, id)).run();
 	ctx.bus.publish(['catalog']);
 	return getExercise(ctx, id);

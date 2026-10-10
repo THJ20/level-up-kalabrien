@@ -8,6 +8,7 @@ import {
 	repsBonusPoints,
 	timeBonusPoints
 } from './bonus';
+import { defaultPlanItems, type PlanItem } from './plan';
 
 describe('Bonuspunkte nach Anstrengung', () => {
 	it('rechnet Zeit-Übungen als Minuten mal Stufe', () => {
@@ -22,10 +23,20 @@ describe('Bonuspunkte nach Anstrengung', () => {
 		expect(repsBonusPoints(20, 4, 'max')).toBe(12);
 	});
 
-	it('wertet nur Wiederholungen über 100 als Overtime', () => {
-		expect(overtimeBonusPoints({ pushups: 150, squats: 100, situps: 90 })).toBe(17.5);
-		expect(overtimeBonusPoints({ pushups: 120, squats: 130, situps: 100 })).toBe(17.5);
-		expect(overtimeBonusPoints({ pushups: 100, squats: 100, situps: 100 })).toBe(0);
+	it('wertet nur Mehrleistung über das Planziel', () => {
+		const plan = defaultPlanItems();
+		expect(overtimeBonusPoints(plan, { pushups: 150, squats: 100, situps: 90 })).toBe(17.5);
+		expect(overtimeBonusPoints(plan, { pushups: 120, squats: 130, situps: 100 })).toBe(17.5);
+		expect(overtimeBonusPoints(plan, { pushups: 100, squats: 100, situps: 100 })).toBe(0);
+	});
+
+	it('nutzt die Sekunden der Übung, Minuten mal 7 und keine BP für Kilometer', () => {
+		const plan: PlanItem[] = [
+			{ exerciseId: 'pull', name: 'Klimmzüge', unit: 'reps', target: 20, secondsPerRep: 4 },
+			{ exerciseId: 'plank', name: 'Plank', unit: 'minutes', target: 3, secondsPerRep: null },
+			{ exerciseId: 'run', name: 'Laufen', unit: 'km', target: 2, secondsPerRep: null }
+		];
+		expect(overtimeBonusPoints(plan, { pull: 35, plank: 5, run: 4 })).toBe(7 + 14);
 	});
 
 	it('rundet für die Anzeige auf ganze Punkte', () => {

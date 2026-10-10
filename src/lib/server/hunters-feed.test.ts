@@ -8,12 +8,12 @@ import { appendEvent, listFeed, recordActivity, toggleReaction } from './feed';
 
 describe('Hunter', () => {
 	it('beginnt die Wertung mit dem späteren Datum aus Go-live und Registrierung', () => {
-		const ctx = createTestContext('2026-10-20T10:00:00Z');
-		ctx.db.update(settings).set({ value: '2026-10-14' }).where(eq(settings.key, 'go_live_date')).run();
-		const early = getHunter(ctx, insertHunter(ctx, 'Früh', { registeredOn: '2026-10-09' }));
-		const late = getHunter(ctx, insertHunter(ctx, 'Spät', { registeredOn: '2026-10-20' }));
-		expect(scoringStartOf(ctx, early)).toBe('2026-10-14');
-		expect(scoringStartOf(ctx, late)).toBe('2026-10-20');
+		const ctx = createTestContext('2026-10-23T10:00:00Z');
+		ctx.db.update(settings).set({ value: '2026-10-17' }).where(eq(settings.key, 'go_live_date')).run();
+		const early = getHunter(ctx, insertHunter(ctx, 'Früh', { registeredOn: '2026-10-12' }));
+		const late = getHunter(ctx, insertHunter(ctx, 'Spät', { registeredOn: '2026-10-23' }));
+		expect(scoringStartOf(ctx, early)).toBe('2026-10-17');
+		expect(scoringStartOf(ctx, late)).toBe('2026-10-23');
 	});
 
 	it('hat Standard-Einstellungen und prüft die Uhrzeit', () => {
@@ -33,37 +33,51 @@ describe('Hunter', () => {
 		expect(() => updateSettings(ctx, id, { reminderTime: '25:00' })).toThrow(/Uhrzeit/);
 	});
 
-	it('ändert Name und Farbe', () => {
+	it('setzt und löscht den Spielernamen, der Login-Name bleibt', () => {
 		const ctx = createTestContext();
 		const id = insertHunter(ctx, 'Tobias');
-		insertHunter(ctx, 'Niklas');
-		expect(updateProfile(ctx, id, { name: 'Tobi', color: '#4cc9ff' })).toMatchObject({
-			name: 'Tobi',
+		const niklas = insertHunter(ctx, 'Niklas');
+		expect(updateProfile(ctx, id, { displayName: '  Shadow  Tobi ', color: '#4cc9ff' })).toMatchObject({
+			name: 'Shadow Tobi',
+			loginName: 'Tobias',
+			displayName: 'Shadow Tobi',
 			color: '#4cc9ff'
 		});
-		expect(() => updateProfile(ctx, id, { name: 'NIKLAS' })).toThrow(/gibt es schon/);
+		expect(() => updateProfile(ctx, id, { displayName: 'NIKLAS' })).toThrow(/gibt es schon/);
+		expect(() => updateProfile(ctx, niklas, { displayName: 'shadow tobi' })).toThrow(/gibt es schon/);
+		expect(() => updateProfile(ctx, id, { displayName: 'x' })).toThrow(/2 bis 20/);
+		expect(updateProfile(ctx, id, { displayName: null })).toMatchObject({ name: 'Tobias', displayName: null });
+		expect(updateProfile(ctx, niklas, { displayName: 'Shadow Tobi' }).name).toBe('Shadow Tobi');
+	});
+
+	it('speichert das Farbschema', () => {
+		const ctx = createTestContext();
+		const id = insertHunter(ctx, 'Tobias');
+		expect(getHunter(ctx, id).theme).toBe('monarch');
+		expect(updateProfile(ctx, id, { theme: 'gate' }).theme).toBe('gate');
+		expect(() => updateProfile(ctx, id, { theme: 'pink' as 'gate' })).toThrow(/Farbschema/);
 	});
 });
 
 describe('Rohdaten', () => {
 	it('liefert Sätze, Krankmeldungen und Bonus-Einträge im Domänenformat', () => {
-		const ctx = createTestContext('2026-10-11T10:00:00Z');
-		const id = insertHunter(ctx, 'Tobias', { registeredOn: '2026-10-09' });
+		const ctx = createTestContext('2026-10-14T10:00:00Z');
+		const id = insertHunter(ctx, 'Tobias', { registeredOn: '2026-10-12' });
 		const now = ctx.clock.now();
 		ctx.db
 			.insert(questSets)
 			.values(
-				(['pushups', 'squats', 'situps'] as const).map((exercise) => ({
+				(['pushups', 'squats', 'situps'] as const).map((exerciseId) => ({
 					id: crypto.randomUUID(),
 					hunterId: id,
-					date: '2026-10-09',
-					exercise,
-					reps: 100,
+					date: '2026-10-12',
+					exerciseId,
+					value: 100,
 					recordedAt: now
 				}))
 			)
 			.run();
-		ctx.db.insert(sickNotes).values({ id: 's1', hunterId: id, date: '2026-10-10', recordedAt: now }).run();
+		ctx.db.insert(sickNotes).values({ id: 's1', hunterId: id, date: '2026-10-13', recordedAt: now }).run();
 		const running = ctx.db.select().from(exercises).where(eq(exercises.isRunning, true)).get()!;
 		ctx.db
 			.insert(bonusEntries)
@@ -71,7 +85,7 @@ describe('Rohdaten', () => {
 				id: 'b1',
 				hunterId: id,
 				exerciseId: running.id,
-				date: '2026-10-09',
+				date: '2026-10-12',
 				minutes: 30,
 				effort: 'moderate',
 				distanceKm: 5,
@@ -81,32 +95,41 @@ describe('Rohdaten', () => {
 			.run();
 
 		const records = loadHunterRecords(ctx, id);
-		expect(records.scoringStart).toBe('2026-10-09');
+		expect(records.scoringStart).toBe('2026-10-12');
 		expect(records.sets).toHaveLength(3);
-		expect(records.sickNotes).toEqual([{ date: '2026-10-10', recordedAt: now }]);
-		expect(records.bonusEntries[0]).toMatchObject({ bonusPoints: 150, distanceKm: 5, isRunning: true });
-		expect(hunterTimeline(ctx, id).map((day) => day.status)).toEqual(['fulfilled', 'sick', 'open']);
+		expect(records.sickNotes).toEqual([{ date: '2026-10-13', recordedAt: now }]);
+		expect(records.bonusEntries[0]).toMatchObject({ bonusPoints: 150, minutes: 30, distanceKm: 5, isRunning: true });
+		expect(records.plans).toHaveLength(1);
+		expect(hunterTimeline(ctx, id).map((day) => day.status)).toEqual(['warmup', 'warmup', 'warmup', 'fulfilled', 'sick', 'open']);
 	});
 });
 
 describe('Feed', () => {
 	it('bündelt Aktivität pro Hunter und Stunde', () => {
-		const ctx = createTestContext('2026-10-09T10:05:00Z');
+		const ctx = createTestContext('2026-10-12T10:05:00Z');
 		const id = insertHunter(ctx, 'Tobias');
-		recordActivity(ctx, id, { date: '2026-10-09', reps: { pushups: 20 } });
+		const push = { exerciseId: 'pushups', name: 'Liegestütze', unit: 'reps' as const };
+		recordActivity(ctx, id, { date: '2026-10-12', quest: { ...push, value: 20 } });
 		ctx.clock.advance(20 * 60_000);
-		recordActivity(ctx, id, { date: '2026-10-09', reps: { pushups: 25, squats: 10 } });
+		recordActivity(ctx, id, { date: '2026-10-12', quest: { ...push, value: 25 } });
+		recordActivity(ctx, id, {
+			date: '2026-10-12',
+			quest: { exerciseId: 'squats', name: 'Kniebeugen', unit: 'reps', value: 10 }
+		});
 		let feed = listFeed(ctx, id);
 		expect(feed).toHaveLength(1);
 		expect(feed[0].payload).toEqual({
-			date: '2026-10-09',
-			reps: { pushups: 45, squats: 10, situps: 0 },
+			date: '2026-10-12',
+			quest: [
+				{ ...push, value: 45 },
+				{ exerciseId: 'squats', name: 'Kniebeugen', unit: 'reps', value: 10 }
+			],
 			bonus: []
 		});
 
 		ctx.clock.advance(60 * 60_000);
 		recordActivity(ctx, id, {
-			date: '2026-10-09',
+			date: '2026-10-12',
 			bonus: { exercise: 'Laufen/Joggen', minutes: 30, reps: null, effort: 'moderate', distanceKm: 5, points: 150 }
 		});
 		feed = listFeed(ctx, id);
@@ -118,7 +141,7 @@ describe('Feed', () => {
 		const ctx = createTestContext();
 		const tobias = insertHunter(ctx, 'Tobias');
 		const niklas = insertHunter(ctx, 'Niklas');
-		const first = appendEvent(ctx, tobias, 'quest_complete', { date: '2026-10-09', backfilled: false });
+		const first = appendEvent(ctx, tobias, 'quest_complete', { date: '2026-10-12', backfilled: false });
 		ctx.clock.advance(1000);
 		const second = appendEvent(ctx, niklas, 'level_up', { level: 2 });
 

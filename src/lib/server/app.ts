@@ -9,6 +9,7 @@ import { createChangeBus, type Notifier, type ServiceContext } from './context';
 import { openDatabase } from './db/client';
 import { PushNotifier, webPushTransport, type PushTransport } from './push';
 import { startScheduler } from './scheduler';
+import { ensureStartPlans } from './plans';
 import { ensureGoLiveDate } from './settings';
 import { ensureVapidKeys, type VapidKeys } from './vapid';
 import { evaluateAllHunters } from './votes';
@@ -45,6 +46,7 @@ export function createApp(config: AppConfig, deps: AppDeps = {}): App {
 		notifier: { notify: () => {} } satisfies Notifier
 	};
 	ensureGoLiveDate(ctx, config.goLiveDate ?? undefined);
+	ensureStartPlans(ctx);
 	const vapid = ensureVapidKeys(ctx, deps.generateVapidKeys);
 	const notifier = new PushNotifier(
 		ctx,

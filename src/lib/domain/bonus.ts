@@ -1,4 +1,5 @@
-import { EXERCISES, QUEST_TARGET, type ExerciseTotals } from './quest';
+import type { PlanItem } from './plan';
+import type { Totals } from './quest';
 
 export const EFFORTS = ['easy', 'moderate', 'hard', 'max'] as const;
 export type Effort = (typeof EFFORTS)[number];
@@ -44,11 +45,16 @@ export function repsBonusPoints(reps: number, secondsPerRep: number, effort: Eff
 	return (reps * secondsPerRep * EFFORT_FACTOR[effort]) / 60;
 }
 
-/** BP für Wiederholungen über dem Pflichtpensum eines Tages. */
-export function overtimeBonusPoints(totals: ExerciseTotals): number {
-	return EXERCISES.reduce((sum, exercise) => {
-		const extraReps = Math.max(0, totals[exercise] - QUEST_TARGET);
-		return sum + repsBonusPoints(extraReps, OVERTIME_SECONDS_PER_REP, OVERTIME_EFFORT);
+/** BP für alles, was über das Tagesziel der Planpunkte hinausgeht. Kilometer geben keine BP. */
+export function overtimeBonusPoints(plan: readonly PlanItem[], totals: Totals): number {
+	return plan.reduce((sum, item) => {
+		const extra = Math.max(0, (totals[item.exerciseId] ?? 0) - item.target);
+		if (extra <= 0) return sum;
+		if (item.unit === 'reps') {
+			return sum + repsBonusPoints(extra, item.secondsPerRep ?? OVERTIME_SECONDS_PER_REP, OVERTIME_EFFORT);
+		}
+		if (item.unit === 'minutes') return sum + timeBonusPoints(extra, OVERTIME_EFFORT);
+		return sum;
 	}, 0);
 }
 

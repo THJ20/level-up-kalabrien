@@ -24,7 +24,7 @@ function tempDir(): string {
 
 function startApp(config: AppConfig, log: string[]): App {
 	const app = createApp(config, {
-		clock: new FakeClock('2026-10-12T10:00:00Z'),
+		clock: new FakeClock('2026-10-15T10:00:00Z'),
 		transport: { send: async () => ({ statusCode: 201 }) },
 		startJobs: false,
 		log: (line) => log.push(line),
@@ -40,7 +40,8 @@ describe('App', () => {
 		const config: AppConfig = {
 			databasePath: join(dir, 'app.db'),
 			backupDir: join(dir, 'backups'),
-			goLiveDate: '2026-10-09',
+			avatarDir: join(dir, 'avatars'),
+			goLiveDate: '2026-10-12',
 			origin: 'https://lvl.test',
 			vapidSubject: 'https://lvl.test'
 		};
@@ -48,7 +49,7 @@ describe('App', () => {
 		const first = startApp(config, firstLog);
 		expect(firstLog.filter((line) => line.includes('https://lvl.test/register?token='))).toHaveLength(1);
 		expect(first.vapid).toEqual({ publicKey: 'pub', privateKey: 'priv' });
-		const tobias = insertHunter(first.ctx, 'Tobias', { registeredOn: '2026-10-09' });
+		const tobias = insertHunter(first.ctx, 'Tobias', { registeredOn: '2026-10-12' });
 		first.stop();
 
 		const secondLog: string[] = [];
@@ -59,7 +60,7 @@ describe('App', () => {
 			.from(missedDays)
 			.where(and(eq(missedDays.hunterId, tobias), eq(missedDays.status, 'active')))
 			.all();
-		expect(active.map((row) => row.date).sort()).toEqual(['2026-10-09', '2026-10-10', '2026-10-11']);
+		expect(active.map((row) => row.date).sort()).toEqual(['2026-10-12', '2026-10-13', '2026-10-14']);
 	});
 });
 
@@ -72,7 +73,7 @@ describe('Snapshots', () => {
 		const copy = new Database(path, { readonly: true });
 		expect(copy.prepare('SELECT name FROM hunters').pluck().all()).toEqual(['Tobias']);
 		copy.close();
-		expect(dailySnapshot(ctx, dir)).toMatch(/app-2026-10-09\.db$/);
+		expect(dailySnapshot(ctx, dir)).toMatch(/app-2026-10-12\.db$/);
 	});
 
 	it('behalten nur die neuesten Tages-Snapshots', () => {

@@ -12,7 +12,7 @@ import { ballots, hunters, missedDays, penalties, verdicts, voteVoters, votes } 
 import { forbidden, invalid, ServiceError } from './errors';
 import { appendEvent } from './feed';
 import { shortDate } from './format';
-import { getHunter, listActiveHunters, toRef, type HunterRef } from './hunters';
+import { getHunter, listActiveHunters, refOf, toRef, type HunterRef } from './hunters';
 import { createPenalty, getPenalty, listPenalties, type Penalty, type PenaltyInput } from './penalties';
 import { hunterTimeline } from './records';
 import { syncBadges } from './badges';
@@ -279,11 +279,11 @@ function hunterRefs(ctx: ServiceContext, ids: string[]): Map<string, HunterRef> 
 	if (ids.length === 0) return new Map();
 	return new Map(
 		ctx.db
-			.select({ id: hunters.id, name: hunters.name, color: hunters.color })
+			.select()
 			.from(hunters)
 			.where(inArray(hunters.id, ids))
 			.all()
-			.map((row) => [row.id, row])
+			.map((row) => [row.id, refOf(row)])
 	);
 }
 
@@ -340,7 +340,7 @@ export function listVerdicts(ctx: ServiceContext, options: { hunterId?: string }
 	return ctx.db
 		.select({
 			verdict: verdicts,
-			hunter: { id: hunters.id, name: hunters.name, color: hunters.color },
+			hunter: hunters,
 			penalty: penalties
 		})
 		.from(verdicts)
@@ -351,7 +351,7 @@ export function listVerdicts(ctx: ServiceContext, options: { hunterId?: string }
 		.all()
 		.map(({ verdict, hunter, penalty }) => ({
 			id: verdict.id,
-			hunter,
+			hunter: refOf(hunter),
 			date: verdict.date,
 			penalty,
 			decidedAt: verdict.decidedAt,
@@ -369,13 +369,13 @@ export function recentMissedNotices(
 ): { id: string; hunterName: string; date: LocalDate }[] {
 	const since = new Date(ctx.clock.now().getTime() - days * 86_400_000);
 	return ctx.db
-		.select({ id: missedDays.id, date: missedDays.date, hunterName: hunters.name, createdAt: missedDays.createdAt })
+		.select({ id: missedDays.id, date: missedDays.date, hunter: hunters })
 		.from(missedDays)
 		.innerJoin(hunters, eq(missedDays.hunterId, hunters.id))
 		.where(and(eq(missedDays.status, 'active'), ne(missedDays.hunterId, viewerId), gte(missedDays.createdAt, since)))
 		.orderBy(desc(missedDays.createdAt))
 		.all()
-		.map(({ id, date, hunterName }) => ({ id, date, hunterName }));
+		.map(({ id, date, hunter }) => ({ id, date, hunterName: refOf(hunter).name }));
 }
 
 // ---------- Erinnerungen und Deaktivierung ----------

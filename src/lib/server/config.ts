@@ -4,6 +4,8 @@ import { isLocalDate, type LocalDate } from '#lib/domain/index.ts';
 export interface AppConfig {
 	databasePath: string;
 	backupDir: string;
+	/** Ordner für hochgeladene Profilbilder. */
+	avatarDir: string;
 	goLiveDate: LocalDate | null;
 	/** Öffentliche Adresse ohne abschließenden Schrägstrich, z. B. `https://levelup.example.de`. */
 	origin: string | null;
@@ -25,6 +27,7 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
 	return {
 		databasePath,
 		backupDir: read(env, 'BACKUP_DIR') ?? join(dirname(databasePath), 'backups'),
+		avatarDir: read(env, 'AVATAR_DIR') ?? join(dirname(databasePath), 'avatars'),
 		goLiveDate,
 		origin,
 		vapidSubject: read(env, 'VAPID_SUBJECT') ?? origin ?? 'mailto:level-up@example.invalid'

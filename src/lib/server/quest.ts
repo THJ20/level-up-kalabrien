@@ -1,44 +1,63 @@
 import { and, asc, eq } from 'drizzle-orm';
 import {
-	EXERCISES,
-	challengeDayNumber,
-	isLocalDate,
-	isValidSetReps,
-	type Exercise,
-	type LocalDate
+	SET_LIMITS,
+	UNIT_LABELS,
+	isTrackedDay,
+	isValidSetValue,
+	isWarmupDay,
+	roundToUnit,
+	type LocalDate,
+	type PlanItem
 } from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
-import { questSets, sickNotes } from './db/schema';
+import { exercises, questSets, sickNotes } from './db/schema';
 import { forbidden, invalid, notFound } from './errors';
 import { appendEvent, recordActivity } from './feed';
 import { applyHunterChange } from './pipeline';
+import { planOn } from './records';
 
 export interface QuestSetRow {
 	id: string;
 	hunterId: string;
 	date: LocalDate;
-	exercise: Exercise;
-	reps: number;
+	exerciseId: string;
+	value: number;
 	recordedAt: Date;
 	clientId: string | null;
 }
 
+export interface QuestSetView extends QuestSetRow {
+	exerciseName: string;
+}
+
 export interface SetInput {
 	date: LocalDate;
-	exercise: Exercise;
-	reps: number;
+	exerciseId: string;
+	value: number;
 	clientId?: string;
 }
 
-/** Erlaubt sind Challenge-Tage bis einschließlich heute. */
+/** Erlaubt sind Aufwärm- und Challenge-Tage bis einschließlich heute. */
 export function assertEntryDate(ctx: ServiceContext, date: LocalDate): void {
-	if (!isLocalDate(date) || challengeDayNumber(date) === null || date > todayOf(ctx)) {
+	if (!isTrackedDay(date) || date > todayOf(ctx)) {
 		throw invalid('Für diesen Tag kann nichts eingetragen werden.');
 	}
 }
 
-function assertReps(reps: number): void {
-	if (!isValidSetReps(reps)) throw invalid('Ein Satz hat 1 bis 500 Wiederholungen.');
+function planItemFor(ctx: ServiceContext, hunterId: string, date: LocalDate, exerciseId: string): PlanItem {
+	const item = planOn(ctx, hunterId, date).find((entry) => entry.exerciseId === exerciseId);
+	if (!item) throw invalid('Diese Übung steht an diesem Tag nicht in deinem Trainingsplan.');
+	return item;
+}
+
+function checkedValue(item: PlanItem, value: number): number {
+	if (!isValidSetValue(item.unit, value)) {
+		const limits = SET_LIMITS[item.unit];
+		throw invalid(
+			`Ein Satz ${item.name} hat ${String(limits.min).replace('.', ',')} bis ${limits.max} ${UNIT_LABELS[item.unit].long}.`
+		);
+	}
+	return roundToUnit(item.unit, value);
 }
 
 function requireOwnSet(ctx: ServiceContext, hunterId: string, setId: string): QuestSetRow {
@@ -49,9 +68,9 @@ function requireOwnSet(ctx: ServiceContext, hunterId: string, setId: string): Qu
 }
 
 export function addSet(ctx: ServiceContext, hunterId: string, input: SetInput): QuestSetRow {
-	if (!(EXERCISES as readonly string[]).includes(input.exercise)) throw invalid('Diese Übung gibt es nicht.');
-	assertReps(input.reps);
 	assertEntryDate(ctx, input.date);
+	const item = planItemFor(ctx, hunterId, input.date, input.exerciseId);
+	const value = checkedValue(item, input.value);
 
 	if (input.clientId) {
 		const existing = ctx.db
@@ -67,13 +86,16 @@ export function addSet(ctx: ServiceContext, hunterId: string, input: SetInput): 
 			id: crypto.randomUUID(),
 			hunterId,
 			date: input.date,
-			exercise: input.exercise,
-			reps: input.reps,
+			exerciseId: item.exerciseId,
+			value,
 			recordedAt: ctx.clock.now(),
 			clientId: input.clientId ?? null
 		};
 		ctx.db.insert(questSets).values(row).run();
-		recordActivity(ctx, hunterId, { date: input.date, reps: { [input.exercise]: input.reps } });
+		recordActivity(ctx, hunterId, {
+			date: input.date,
+			quest: { exerciseId: item.exerciseId, name: item.name, unit: item.unit, value }
+		});
 		return row;
 	});
 }
@@ -82,13 +104,14 @@ export function updateSet(
 	ctx: ServiceContext,
 	hunterId: string,
 	setId: string,
-	patch: { reps: number }
+	patch: { value: number }
 ): QuestSetRow {
 	const row = requireOwnSet(ctx, hunterId, setId);
-	assertReps(patch.reps);
+	const item = planItemFor(ctx, hunterId, row.date, row.exerciseId);
+	const value = checkedValue(item, patch.value);
 	return applyHunterChange(ctx, hunterId, () => {
-		ctx.db.update(questSets).set({ reps: patch.reps }).where(eq(questSets.id, setId)).run();
-		return { ...row, reps: patch.reps };
+		ctx.db.update(questSets).set({ value }).where(eq(questSets.id, setId)).run();
+		return { ...row, value };
 	});
 }
 
@@ -99,17 +122,20 @@ export function deleteSet(ctx: ServiceContext, hunterId: string, setId: string):
 	});
 }
 
-export function listSets(ctx: ServiceContext, hunterId: string, date: LocalDate): QuestSetRow[] {
+export function listSets(ctx: ServiceContext, hunterId: string, date: LocalDate): QuestSetView[] {
 	return ctx.db
-		.select()
+		.select({ set: questSets, exerciseName: exercises.name })
 		.from(questSets)
+		.innerJoin(exercises, eq(questSets.exerciseId, exercises.id))
 		.where(and(eq(questSets.hunterId, hunterId), eq(questSets.date, date)))
 		.orderBy(asc(questSets.recordedAt))
-		.all();
+		.all()
+		.map(({ set, exerciseName }) => ({ ...set, exerciseName }));
 }
 
 export function reportSick(ctx: ServiceContext, hunterId: string, date: LocalDate): void {
 	assertEntryDate(ctx, date);
+	if (isWarmupDay(date)) throw invalid('Aufwärmtage zählen nicht, eine Krankmeldung ist dafür nicht nötig.');
 	const existing = ctx.db
 		.select({ id: sickNotes.id })
 		.from(sickNotes)

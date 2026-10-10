@@ -1,22 +1,26 @@
 import { CHALLENGE_START, addDays } from './challenge';
-import { QUEST_TARGET, emptyTotals } from './quest';
+import { DEFAULT_TARGET, defaultPlanItems } from './plan';
 import type { DayStatus, DaySummary } from './timeline';
 
-/** Baut eine Tagesübersicht ab Challenge-Start aus einer Liste von Tagesstatus. */
+/** Baut eine Tagesübersicht ab Tag 1 aus einer Liste von Tagesstatus, mit dem Startplan. */
 export function timelineOf(statuses: readonly DayStatus[]): DaySummary[] {
-	return statuses.map((status, index) => ({
-		date: addDays(CHALLENGE_START, index),
-		dayNumber: index + 1,
-		status,
-		backfilled: false,
-		totals:
-			status === 'fulfilled'
-				? { pushups: QUEST_TARGET, squats: QUEST_TARGET, situps: QUEST_TARGET }
-				: emptyTotals(),
-		completedAt: null,
-		bonusPoints: 0,
-		overtimePoints: 0
-	}));
+	const plan = defaultPlanItems();
+	return statuses.map((status, index) => {
+		const complete = status === 'fulfilled';
+		return {
+			date: addDays(CHALLENGE_START, index),
+			dayNumber: index + 1,
+			status,
+			backfilled: false,
+			plan,
+			totals: complete ? Object.fromEntries(plan.map((item) => [item.exerciseId, DEFAULT_TARGET])) : {},
+			complete,
+			progress: complete ? 1 : 0,
+			completedAt: null,
+			bonusPoints: 0,
+			overtimePoints: 0
+		};
+	});
 }
 
 export function repeat(status: DayStatus, count: number): DayStatus[] {

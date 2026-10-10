@@ -27,7 +27,13 @@ export const hunters = sqliteTable('hunters', {
 	reminderTime: text('reminder_time').notNull().default('20:00'),
 	votePushEnabled: flag('vote_push_enabled').notNull().default(true),
 	soundEnabled: flag('sound_enabled').notNull().default(false),
-	lastReminderOn: text('last_reminder_on')
+	lastReminderOn: text('last_reminder_on'),
+	/** Frei gewählter Spielername, sonst gilt der Login-Name. */
+	displayName: text('display_name'),
+	displayNameKey: text('display_name_key').unique(),
+	/** `preset:01` bis `preset:08` oder `upload:<datei>`. */
+	avatar: text('avatar'),
+	theme: text('theme', { enum: ['monarch', 'gate'] }).notNull().default('monarch')
 });
 
 export const sessions = sqliteTable('sessions', {
@@ -62,8 +68,11 @@ export const questSets = sqliteTable(
 			.notNull()
 			.references(() => hunters.id),
 		date: text('date').notNull(),
-		exercise: text('exercise', { enum: ['pushups', 'squats', 'situps'] }).notNull(),
-		reps: integer('reps').notNull(),
+		exerciseId: text('exercise_id')
+			.notNull()
+			.references(() => exercises.id),
+		/** Wert in der Einheit des Planpunkts dieser Übung am Tag. */
+		value: real('value').notNull(),
 		recordedAt: timestamp('recorded_at').notNull(),
 		clientId: text('client_id')
 	},
@@ -71,6 +80,38 @@ export const questSets = sqliteTable(
 		index('quest_sets_hunter_date').on(table.hunterId, table.date),
 		uniqueIndex('quest_sets_client').on(table.hunterId, table.clientId)
 	]
+);
+
+/** Version eines Trainingsplans. Sie gilt ab `valid_from`, bis eine neuere Version beginnt. */
+export const plans = sqliteTable(
+	'plans',
+	{
+		id: text('id').primaryKey(),
+		hunterId: text('hunter_id')
+			.notNull()
+			.references(() => hunters.id),
+		validFrom: text('valid_from').notNull(),
+		/** Vom System angelegter Startplan, nicht vom Hunter gespeichert. */
+		isDefault: flag('is_default').notNull().default(false),
+		createdAt: timestamp('created_at').notNull()
+	},
+	(table) => [uniqueIndex('plans_hunter_valid_from').on(table.hunterId, table.validFrom)]
+);
+
+export const planItems = sqliteTable(
+	'plan_items',
+	{
+		planId: text('plan_id')
+			.notNull()
+			.references(() => plans.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull(),
+		exerciseId: text('exercise_id')
+			.notNull()
+			.references(() => exercises.id),
+		unit: text('unit', { enum: ['reps', 'minutes', 'km'] }).notNull(),
+		target: real('target').notNull()
+	},
+	(table) => [primaryKey({ columns: [table.planId, table.position] })]
 );
 
 export const sickNotes = sqliteTable(

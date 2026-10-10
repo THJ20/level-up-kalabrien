@@ -1,0 +1,1 @@
+DROP TABLE `quest_sets`;

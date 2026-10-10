@@ -10,6 +10,7 @@ import {
 } from './context';
 import { openDatabase } from './db/client';
 import { hunters, questSets, settings } from './db/schema';
+import { ensureStartPlan } from './plans';
 
 export class FakeClock implements Clock {
 	private current: number;
@@ -45,8 +46,8 @@ export interface TestContext extends ServiceContext {
 	published: ChangeTopic[][];
 }
 
-/** Kontext mit Speicher-Datenbank, steuerbarer Uhr und Go-live am Challenge-Start. */
-export function createTestContext(nowIso = '2026-10-09T10:00:00Z'): TestContext {
+/** Kontext mit Speicher-Datenbank, steuerbarer Uhr und Go-live am Challenge-Start (12.10.2026). */
+export function createTestContext(nowIso = '2026-10-12T10:00:00Z'): TestContext {
 	const clock = new FakeClock(nowIso);
 	const db = openDatabase(':memory:', clock.now());
 	db.insert(settings).values({ key: 'go_live_date', value: CHALLENGE_START }).run();
@@ -63,17 +64,17 @@ export interface TestHunterOptions {
 	active?: boolean;
 }
 
-/** Trägt eine erfüllte Daily Quest direkt in die Datenbank ein (ohne Pipeline). */
+/** Trägt eine erfüllte Daily Quest nach dem Startplan direkt in die Datenbank ein (ohne Pipeline). */
 export function seedFullDay(ctx: ServiceContext, hunterId: string, date: LocalDate): void {
 	ctx.db
 		.insert(questSets)
 		.values(
-			(['pushups', 'squats', 'situps'] as const).map((exercise) => ({
+			(['pushups', 'squats', 'situps'] as const).map((exerciseId) => ({
 				id: crypto.randomUUID(),
 				hunterId,
 				date,
-				exercise,
-				reps: 100,
+				exerciseId,
+				value: 100,
 				recordedAt: ctx.clock.now()
 			}))
 		)
@@ -101,5 +102,6 @@ export function insertHunter(
 			createdAt: ctx.clock.now()
 		})
 		.run();
+	ensureStartPlan(ctx, id);
 	return id;
 }

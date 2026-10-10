@@ -1,3 +1,4 @@
+import { CORE_EXERCISES } from '#lib/domain/index.ts';
 import type { AppDb } from './client';
 import { exercises } from './schema';
 
@@ -27,10 +28,26 @@ export const START_CATALOG: readonly CatalogSeed[] = [
 	{ name: 'Ausfallschritte', kind: 'reps', secondsPerRep: 3 }
 ];
 
-/** Spielt den Startkatalog der Bonusübungen ein, solange der Katalog leer ist. */
+/**
+ * Legt die Kernübungen der Daily Quest mit festen IDs an, falls sie fehlen,
+ * und spielt den Startkatalog der Zusatzübungen ein, solange der Katalog leer ist.
+ */
 export function seedCatalog(db: AppDb, now: Date): void {
-	const existing = db.select({ id: exercises.id }).from(exercises).limit(1).all();
-	if (existing.length > 0) return;
+	const empty = db.select({ id: exercises.id }).from(exercises).limit(1).all().length === 0;
+	db.insert(exercises)
+		.values(
+			CORE_EXERCISES.map((entry) => ({
+				id: entry.id,
+				name: entry.name,
+				kind: 'reps' as const,
+				secondsPerRep: entry.secondsPerRep,
+				createdBy: null,
+				createdAt: now
+			}))
+		)
+		.onConflictDoNothing()
+		.run();
+	if (!empty) return;
 	db.insert(exercises)
 		.values(
 			START_CATALOG.map((entry) => ({

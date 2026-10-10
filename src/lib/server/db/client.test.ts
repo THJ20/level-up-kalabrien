@@ -16,6 +16,8 @@ const TABLES = [
 	'invites',
 	'missed_days',
 	'penalties',
+	'plan_items',
+	'plans',
 	'push_subscriptions',
 	'quest_sets',
 	'reactions',
@@ -38,14 +40,19 @@ describe('Datenbank', () => {
 
 		runMigrations(ctx.db.$client, ctx.clock.now());
 		const applied = ctx.db.$client.prepare('SELECT COUNT(*) FROM __migrations').pluck().get();
-		expect(applied).toBe(1);
+		expect(applied).toBe(3);
 	});
 
 	it('spielt den Startkatalog genau einmal ein', () => {
 		const ctx = createTestContext();
 		seedCatalog(ctx.db, ctx.clock.now());
 		const all = ctx.db.select().from(exercises).all();
-		expect(all).toHaveLength(15);
+		expect(all).toHaveLength(18);
+		expect(all.filter((exercise) => ['pushups', 'squats', 'situps'].includes(exercise.id)).map((exercise) => exercise.name)).toEqual([
+			'Liegestütze',
+			'Kniebeugen',
+			'Sit-ups/Crunches'
+		]);
 		const running = ctx.db.select().from(exercises).where(eq(exercises.isRunning, true)).all();
 		expect(running.map((exercise) => exercise.name)).toEqual(['Laufen/Joggen']);
 	});
@@ -58,9 +65,9 @@ describe('Datenbank', () => {
 				.values({
 					id: 'x',
 					hunterId: 'unbekannt',
-					date: '2026-10-09',
-					exercise: 'pushups',
-					reps: 10,
+					date: '2026-10-12',
+					exerciseId: 'pushups',
+					value: 10,
 					recordedAt: ctx.clock.now()
 				})
 				.run()
@@ -68,7 +75,7 @@ describe('Datenbank', () => {
 	});
 
 	it('liefert den Berliner Kalendertag der Uhr', () => {
-		const ctx = createTestContext('2026-10-09T22:30:00Z');
-		expect(todayOf(ctx)).toBe('2026-10-10');
+		const ctx = createTestContext('2026-10-12T22:30:00Z');
+		expect(todayOf(ctx)).toBe('2026-10-13');
 	});
 });

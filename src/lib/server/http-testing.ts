@@ -1,3 +1,6 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { RequestEvent } from '@sveltejs/kit';
 import { createApp, setApp, type App } from './app';
 import { authenticate } from './http';
@@ -11,7 +14,7 @@ export interface TestApp {
 }
 
 /** App mit Speicher-Datenbank, steuerbarer Uhr und aufgezeichnetem Push; wird als aktuelle App gesetzt. */
-export function createTestApp(nowIso = '2026-10-09T10:00:00Z'): TestApp {
+export function createTestApp(nowIso = '2026-10-12T10:00:00Z'): TestApp {
 	const clock = new FakeClock(nowIso);
 	const log: string[] = [];
 	const pushes: TestApp['pushes'] = [];
@@ -19,7 +22,8 @@ export function createTestApp(nowIso = '2026-10-09T10:00:00Z'): TestApp {
 		{
 			databasePath: ':memory:',
 			backupDir: 'data/test-backups',
-			goLiveDate: '2026-10-09',
+			avatarDir: mkdtempSync(join(tmpdir(), 'lu-avatars-')),
+			goLiveDate: '2026-10-12',
 			origin: 'https://lvl.test',
 			vapidSubject: 'https://lvl.test'
 		},
@@ -72,6 +76,8 @@ export interface CallOptions {
 	body?: unknown;
 	token?: string;
 	params?: Record<string, string>;
+	/** Roher Körper statt JSON, z. B. ein Bild. */
+	raw?: { type: string; bytes: Uint8Array };
 }
 
 export interface CallResult {
@@ -89,11 +95,17 @@ export async function call(
 	const url = new URL(options.path, 'https://lvl.test');
 	const cookies = new CookieJar();
 	if (options.token) cookies.set('session', options.token);
-	const request = new Request(url, {
-		method: options.method ?? 'GET',
-		headers: options.body !== undefined ? { 'content-type': 'application/json' } : undefined,
-		body: options.body !== undefined ? JSON.stringify(options.body) : undefined
-	});
+	const request = options.raw
+		? new Request(url, {
+				method: options.method ?? 'POST',
+				headers: { 'content-type': options.raw.type },
+				body: options.raw.bytes as BodyInit
+			})
+		: new Request(url, {
+				method: options.method ?? 'GET',
+				headers: options.body !== undefined ? { 'content-type': 'application/json' } : undefined,
+				body: options.body !== undefined ? JSON.stringify(options.body) : undefined
+			});
 	const event = {
 		request,
 		url,
@@ -110,6 +122,9 @@ export async function call(
 	} as unknown as RequestEvent;
 	authenticate(event);
 	const response = await handler(event);
+	if (!(response.headers.get('content-type') ?? 'application/json').includes('json')) {
+		return { status: response.status, body: new Uint8Array(await response.arrayBuffer()), cookies };
+	}
 	const text = await response.text();
 	return { status: response.status, body: text ? JSON.parse(text) : null, cookies };
 }

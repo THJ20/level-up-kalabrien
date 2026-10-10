@@ -23,7 +23,7 @@ import { POST as subscribe } from './push/subscription/+server';
 
 const PASSWORD = 'geheim-genug-123';
 
-async function team(nowIso = '2026-10-09T10:00:00Z') {
+async function team(nowIso = '2026-10-12T10:00:00Z') {
 	const test = createTestApp(nowIso);
 	const admin = await call(register, {
 		method: 'POST',
@@ -51,11 +51,11 @@ describe('Fach-API', () => {
 				method: 'POST',
 				path: '/api/sets',
 				token: tobias.token,
-				body: { date: '2026-10-09', exercise, reps: 100 }
+				body: { date: '2026-10-12', exerciseId: exercise, value: 100 }
 			});
 			expect(response.status).toBe(200);
 		}
-		const detail = await call(day, { path: '/api/days/2026-10-09', token: tobias.token, params: { date: '2026-10-09' } });
+		const detail = await call(day, { path: '/api/days/2026-10-12', token: tobias.token, params: { date: '2026-10-12' } });
 		expect(detail.body.day.status).toBe('fulfilled');
 		expect(detail.body.sets).toHaveLength(3);
 
@@ -64,21 +64,21 @@ describe('Fach-API', () => {
 		expect(summary.body.settings.reminderTime).toBe('20:00');
 
 		const rows = (await call(board, { path: '/api/board', token: tobias.token })).body.board;
-		expect(rows.find((row: { hunter: { name: string } }) => row.hunter.name === 'Tobias').progress).toBe(300);
+		expect(rows.find((row: { hunter: { name: string } }) => row.hunter.name === 'Tobias').progress).toBe(1);
 
 		const invalid = await call(addSet, {
 			method: 'POST',
 			path: '/api/sets',
 			token: tobias.token,
-			body: { date: '2026-10-09', exercise: 'burpees', reps: 10 }
+			body: { date: '2026-10-12', exerciseId: 'burpees', value: 10 }
 		});
 		expect(invalid.status).toBe(400);
 	});
 
 	it('meldet krank, trägt Bonus ein und filtert Rangliste und Statistik', async () => {
-		const { tobias, niklas } = await team('2026-10-10T10:00:00Z');
+		const { tobias, niklas } = await team('2026-10-13T10:00:00Z');
 		expect(
-			(await call(reportSick, { method: 'PUT', path: '/api/sick/2026-10-10', token: niklas.token, params: { date: '2026-10-10' } }))
+			(await call(reportSick, { method: 'PUT', path: '/api/sick/2026-10-13', token: niklas.token, params: { date: '2026-10-13' } }))
 				.status
 		).toBe(200);
 
@@ -88,24 +88,24 @@ describe('Fach-API', () => {
 			method: 'POST',
 			path: '/api/bonus',
 			token: tobias.token,
-			body: { exerciseId: run.id, date: '2026-10-10', minutes: 30, effort: 'moderate', distanceKm: 5 }
+			body: { exerciseId: run.id, date: '2026-10-13', minutes: 30, effort: 'moderate', distanceKm: 5 }
 		});
 		expect(bonus.body.entry.bonusPoints).toBe(150);
 
-		const board = (await call(leaderboard, { path: '/api/leaderboard?from=2026-10-10&to=2026-10-10', token: tobias.token }))
+		const board = (await call(leaderboard, { path: '/api/leaderboard?from=2026-10-13&to=2026-10-13', token: tobias.token }))
 			.body;
 		expect(board.bonus[0]).toMatchObject({ hunter: { name: 'Tobias' }, periodBonusPoints: 150 });
 
-		const series = (await call(stats, { path: `/api/stats?from=2026-10-10&to=2026-10-10&hunters=${niklas.id}`, token: tobias.token }))
+		const series = (await call(stats, { path: `/api/stats?from=2026-10-13&to=2026-10-13&hunters=${niklas.id}`, token: tobias.token }))
 			.body.series;
 		expect(series).toHaveLength(1);
 		expect(series[0].days[0].status).toBe('sick');
-		expect((await call(stats, { path: '/api/stats?from=kaputt&to=2026-10-10', token: tobias.token })).status).toBe(400);
+		expect((await call(stats, { path: '/api/stats?from=kaputt&to=2026-10-13', token: tobias.token })).status).toBe(400);
 	});
 
 	it('führt durch Strafe, Abstimmung und Feed-Reaktion', async () => {
-		const { app, clock, tobias, niklas } = await team('2026-10-09T10:00:00Z');
-		clock.set('2026-10-10T10:00:00Z');
+		const { app, clock, tobias, niklas } = await team('2026-10-12T10:00:00Z');
+		clock.set('2026-10-13T10:00:00Z');
 		evaluateAllHunters(app.ctx);
 		const penalty = (
 			await call(createPenalty, { method: 'POST', path: '/api/penalties', token: tobias.token, body: { title: '50 Burpees' } })

@@ -1,52 +1,50 @@
 import type { LocalDate } from './challenge';
+import type { PlanItem } from './plan';
 
-export const EXERCISES = ['pushups', 'squats', 'situps'] as const;
-export type Exercise = (typeof EXERCISES)[number];
-
-export const EXERCISE_LABELS: Record<Exercise, string> = {
-	pushups: 'PUSH-UPS',
-	squats: 'SQUATS',
-	situps: 'SIT-UPS'
-};
-
-export const QUEST_TARGET = 100;
-export const MAX_REPS_PER_SET = 500;
-
+/** Ein Satz der Daily Quest: Wert in der Einheit des Planpunkts dieser Übung. */
 export interface QuestSet {
 	id: string;
 	date: LocalDate;
-	exercise: Exercise;
-	reps: number;
+	exerciseId: string;
+	value: number;
 	recordedAt: Date;
 }
 
-export type ExerciseTotals = Record<Exercise, number>;
+/** Summen eines Tages je Übungs-ID. */
+export type Totals = Record<string, number>;
 
-export function isValidSetReps(reps: number): boolean {
-	return Number.isInteger(reps) && reps >= 1 && reps <= MAX_REPS_PER_SET;
-}
+const EPSILON = 1e-9;
 
-export function emptyTotals(): ExerciseTotals {
-	return { pushups: 0, squats: 0, situps: 0 };
-}
-
-export function totalsOf(sets: readonly QuestSet[]): ExerciseTotals {
-	const totals = emptyTotals();
-	for (const entry of sets) totals[entry.exercise] += entry.reps;
+export function totalsOf(sets: readonly Pick<QuestSet, 'exerciseId' | 'value'>[]): Totals {
+	const totals: Totals = {};
+	for (const entry of sets) totals[entry.exerciseId] = (totals[entry.exerciseId] ?? 0) + entry.value;
+	for (const key of Object.keys(totals)) totals[key] = Math.round(totals[key] * 1000) / 1000;
 	return totals;
 }
 
-export function isQuestComplete(totals: ExerciseTotals): boolean {
-	return EXERCISES.every((exercise) => totals[exercise] >= QUEST_TARGET);
+export function itemDone(item: Pick<PlanItem, 'exerciseId' | 'target'>, totals: Totals): boolean {
+	return (totals[item.exerciseId] ?? 0) + EPSILON >= item.target;
+}
+
+/** Erfüllt, wenn jeder Planpunkt sein Ziel erreicht. */
+export function isQuestComplete(plan: readonly PlanItem[], totals: Totals): boolean {
+	return plan.length > 0 && plan.every((item) => itemDone(item, totals));
+}
+
+/** Fortschritt 0 bis 1: Mittel der auf das Ziel gekappten Anteile aller Planpunkte. */
+export function questProgress(plan: readonly PlanItem[], totals: Totals): number {
+	if (plan.length === 0) return 0;
+	const sum = plan.reduce((total, item) => total + Math.min(1, (totals[item.exerciseId] ?? 0) / item.target), 0);
+	return sum / plan.length;
 }
 
 /** Erfassungszeitpunkt des Satzes, mit dem die Daily Quest eines Tages erfüllt wurde. */
-export function completionTime(setsOfDay: readonly QuestSet[]): Date | null {
+export function completionTime(plan: readonly PlanItem[], setsOfDay: readonly QuestSet[]): Date | null {
 	const ordered = [...setsOfDay].sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime());
-	const totals = emptyTotals();
+	const totals: Totals = {};
 	for (const entry of ordered) {
-		totals[entry.exercise] += entry.reps;
-		if (isQuestComplete(totals)) return entry.recordedAt;
+		totals[entry.exerciseId] = (totals[entry.exerciseId] ?? 0) + entry.value;
+		if (isQuestComplete(plan, totals)) return entry.recordedAt;
 	}
 	return null;
 }

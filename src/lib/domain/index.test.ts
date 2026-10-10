@@ -16,7 +16,11 @@ describe('Öffentliche Schnittstelle', () => {
 			'localDateOf',
 			'daysUntilDeparture',
 			'BADGES',
-			'EXERCISES',
+			'badgeProgress',
+			'defaultPlanItems',
+			'planFor',
+			'parsePlanText',
+			'matchExercise',
 			'EFFORTS'
 		]) {
 			expect(domain).toHaveProperty(name);

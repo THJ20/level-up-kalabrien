@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	CHALLENGE_END,
 	addDays,
+	isTrackedDay,
+	isWarmupDay,
 	challengeDayNumber,
 	challengeDays,
 	daysBetween,
@@ -15,18 +17,34 @@ import {
 
 describe('Kalender', () => {
 	it('kennt Start, Ende und Länge der Challenge', () => {
-		expect(challengeDayNumber('2026-10-09')).toBe(1);
-		expect(challengeDayNumber(CHALLENGE_END)).toBe(202);
-		expect(challengeDayNumber('2026-10-08')).toBeNull();
+		expect(challengeDayNumber('2026-10-12')).toBe(1);
+		expect(challengeDayNumber(CHALLENGE_END)).toBe(199);
+		expect(challengeDayNumber('2026-10-11')).toBeNull();
 		expect(challengeDayNumber('2027-04-29')).toBeNull();
 		const days = challengeDays();
-		expect(days).toHaveLength(202);
-		expect(days[0]).toBe('2026-10-09');
-		expect(days[201]).toBe('2027-04-28');
+		expect(days).toHaveLength(199);
+		expect(days[0]).toBe('2026-10-12');
+		expect(days[198]).toBe('2027-04-28');
+	});
+
+	it('hat drei Aufwärmtage vor dem Start', () => {
+		expect(isWarmupDay('2026-10-08')).toBe(false);
+		expect(isWarmupDay('2026-10-09')).toBe(true);
+		expect(isWarmupDay('2026-10-11')).toBe(true);
+		expect(isWarmupDay('2026-10-12')).toBe(false);
+		expect(challengeDayNumber('2026-10-09')).toBeNull();
+	});
+
+	it('erlaubt Einträge an Aufwärm- und Challenge-Tagen', () => {
+		expect(isTrackedDay('2026-10-08')).toBe(false);
+		expect(isTrackedDay('2026-10-09')).toBe(true);
+		expect(isTrackedDay('2027-04-28')).toBe(true);
+		expect(isTrackedDay('2027-04-29')).toBe(false);
+		expect(isTrackedDay('kein Datum')).toBe(false);
 	});
 
 	it('zählt die Tage bis zum Abflug', () => {
-		expect(daysUntilDeparture('2026-10-09')).toBe(202);
+		expect(daysUntilDeparture('2026-10-12')).toBe(199);
 		expect(daysUntilDeparture('2027-04-28')).toBe(1);
 		expect(daysUntilDeparture('2027-05-01')).toBe(0);
 	});

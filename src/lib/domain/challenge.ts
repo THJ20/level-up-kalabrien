@@ -2,10 +2,13 @@
 export type LocalDate = string;
 
 export const TIME_ZONE = 'Europe/Berlin';
-export const CHALLENGE_START: LocalDate = '2026-10-09';
+/** Erster Aufwärmtag. Aufwärmtage kann man eintragen, sie fließen aber nicht in die Wertung ein. */
+export const WARMUP_START: LocalDate = '2026-10-09';
+/** Offizieller Start, Tag 1 der Challenge. */
+export const CHALLENGE_START: LocalDate = '2026-10-12';
 export const CHALLENGE_END: LocalDate = '2027-04-28';
 export const DEPARTURE: LocalDate = '2027-04-29';
-export const CHALLENGE_DAYS = 202;
+export const CHALLENGE_DAYS = 199;
 
 const DAY_MS = 86_400_000;
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -37,6 +40,15 @@ export function daysBetween(from: LocalDate, to: LocalDate): number {
 export function challengeDayNumber(date: LocalDate): number | null {
 	const dayNumber = daysBetween(CHALLENGE_START, date) + 1;
 	return dayNumber >= 1 && dayNumber <= CHALLENGE_DAYS ? dayNumber : null;
+}
+
+export function isWarmupDay(date: LocalDate): boolean {
+	return date >= WARMUP_START && date < CHALLENGE_START;
+}
+
+/** Tage, für die man etwas eintragen kann: Aufwärmtage und Challenge-Tage. */
+export function isTrackedDay(date: LocalDate): boolean {
+	return isLocalDate(date) && date >= WARMUP_START && date <= CHALLENGE_END;
 }
 
 export function challengeDays(): LocalDate[] {
