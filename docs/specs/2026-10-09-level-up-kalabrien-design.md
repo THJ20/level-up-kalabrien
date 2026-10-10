@@ -1,5 +1,7 @@
 # Level Up · Kalabrien · Design-Spezifikation
 
+> **Hinweis:** Die Überarbeitung vom 10.10.2026 (`2026-10-10-ueberarbeitung-1-design.md`) ändert Start, Levelkurve, Daily Quest (eigener Trainingsplan), Badges und Profil. Wo sich beide Dokumente widersprechen, gilt die Überarbeitung.
+
 Stand: 09.10.2026 · Autor: Tobias Heinze (mit Claude) · Status: zur Freigabe
 
 ## 1. Ziel und Rahmen
