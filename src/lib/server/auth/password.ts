@@ -1,7 +1,8 @@
 import { hash, verify } from '@node-rs/argon2';
 import { invalid } from '../errors';
+import { MIN_PASSWORD_LENGTH } from '../../shared/constants';
 
-export const MIN_PASSWORD_LENGTH = 10;
+export { MIN_PASSWORD_LENGTH };
 const MAX_PASSWORD_LENGTH = 200;
 
 export function validatePassword(password: string): void {

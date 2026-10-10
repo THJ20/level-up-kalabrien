@@ -12,6 +12,7 @@ import type { ServiceContext } from './context';
 import { feedEvents, hunters, reactions } from './db/schema';
 import { invalid, notFound } from './errors';
 import type { HunterRef } from './hunters';
+import { REACTIONS, type Reaction } from '../shared/constants';
 
 export const FEED_EVENT_TYPES = [
 	'joined',
@@ -27,8 +28,7 @@ export const FEED_EVENT_TYPES = [
 ] as const;
 export type FeedEventType = (typeof FEED_EVENT_TYPES)[number];
 
-export const REACTIONS = ['fire', 'muscle', 'laugh', 'eyes'] as const;
-export type Reaction = (typeof REACTIONS)[number];
+export { REACTIONS, type Reaction };
 
 export interface BonusActivity {
 	exercise: string;

@@ -1,0 +1,240 @@
+/* Shadow Monarch: fast schwarzer Grund mit violettem Schimmer, Panels mit Eckklammern, Akzent Violett. */
+:root {
+	--bg: #05030a;
+	--bg-glow:
+		radial-gradient(90% 45% at 50% 0%, rgba(58, 24, 120, 0.55) 0%, transparent 65%),
+		radial-gradient(60% 40% at 90% 100%, rgba(40, 14, 80, 0.55) 0%, transparent 70%);
+	--panel: rgba(20, 10, 36, 0.82);
+	--panel-solid: #140a24;
+	--panel-raised: #1b0f31;
+	--line: #a47cff;
+	--line-dim: #5d3fa0;
+	--line-faint: rgba(164, 124, 255, 0.16);
+	--glow: rgba(150, 100, 255, 0.55);
+	--glow-soft: rgba(130, 80, 255, 0.22);
+	--text: #f0e9ff;
+	--dim: #a194bd;
+	--muted: #7d7196;
+	--accent-text: #c9b2ff;
+	--track: rgba(164, 124, 255, 0.14);
+	--ok: #7ef0d0;
+	--ok-soft: rgba(126, 240, 208, 0.14);
+	--warn: #ff4f7b;
+	--warn-soft: rgba(255, 79, 123, 0.14);
+	--sick: #9a94ad;
+	--sick-soft: rgba(154, 148, 173, 0.16);
+	--unscored: #2a2140;
+	--gold: #f5c542;
+
+	--f-sys: 'Oxanium', 'Segoe UI', system-ui, sans-serif;
+	--f-body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+
+	--radius: 4px;
+	--gap: 12px;
+	--nav-h: 64px;
+	--sidebar-w: 232px;
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	--safe-top: env(safe-area-inset-top, 0px);
+
+	color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--bg);
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	background: var(--bg);
+	background-image: var(--bg-glow);
+	background-attachment: fixed;
+	color: var(--text);
+	font-family: var(--f-body);
+	font-size: 16px;
+	line-height: 1.45;
+	-webkit-font-smoothing: antialiased;
+	-webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	font-weight: 600;
+	text-wrap: balance;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: var(--accent-text);
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+
+:focus-visible {
+	outline: 2px solid var(--line);
+	outline-offset: 2px;
+}
+
+.sys {
+	font-family: var(--f-sys);
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.num {
+	font-family: var(--f-sys);
+	font-variant-numeric: tabular-nums;
+}
+
+.dim {
+	color: var(--dim);
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+/* Buttons */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 8px 16px;
+	border: 1px solid var(--line-dim);
+	border-radius: var(--radius);
+	background: rgba(164, 124, 255, 0.08);
+	color: var(--text);
+	font-family: var(--f-sys);
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-size: 14px;
+	cursor: pointer;
+	text-decoration: none;
+	transition:
+		border-color 0.15s,
+		background 0.15s,
+		transform 0.1s;
+}
+
+.btn:hover {
+	border-color: var(--line);
+}
+
+.btn:active {
+	transform: scale(0.97);
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.btn-primary {
+	background: linear-gradient(180deg, #8d5cff, #6b3fe0);
+	border-color: var(--line);
+	box-shadow: 0 0 18px var(--glow-soft);
+}
+
+.btn-ghost {
+	background: none;
+	border-color: transparent;
+	color: var(--dim);
+}
+
+.btn-ghost:hover {
+	color: var(--text);
+	border-color: var(--line-faint);
+}
+
+.btn-danger {
+	border-color: rgba(255, 79, 123, 0.5);
+	color: #ffb3c6;
+	background: var(--warn-soft);
+}
+
+.btn-block {
+	width: 100%;
+}
+
+.btn-small {
+	min-height: 32px;
+	padding: 4px 10px;
+	font-size: 12px;
+}
+
+/* Formulare */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.field > span {
+	font-size: 13px;
+	color: var(--dim);
+}
+
+.input,
+select.input,
+textarea.input {
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 12px;
+	border: 1px solid var(--line-dim);
+	border-radius: var(--radius);
+	background: rgba(5, 3, 10, 0.6);
+	color: var(--text);
+}
+
+.input:focus {
+	outline: none;
+	border-color: var(--line);
+	box-shadow: 0 0 0 3px var(--glow-soft);
+}
+
+.form-error {
+	color: #ff9db6;
+	font-size: 14px;
+}
+
+.hint {
+	font-size: 13px;
+	color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

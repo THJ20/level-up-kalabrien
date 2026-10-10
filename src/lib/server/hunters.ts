@@ -4,17 +4,9 @@ import type { ServiceContext } from './context';
 import { hunters } from './db/schema';
 import { invalid, notFound, ServiceError } from './errors';
 import { getGoLiveDate } from './settings';
+import { AVATAR_COLORS } from '../shared/constants';
 
-export const AVATAR_COLORS = [
-	'#a47cff',
-	'#7ef0d0',
-	'#ff7a45',
-	'#4cc9ff',
-	'#ff4f7b',
-	'#f5c542',
-	'#62f0a6',
-	'#c9b2ff'
-] as const;
+export { AVATAR_COLORS };
 
 export type HunterRole = 'admin' | 'hunter';
 
