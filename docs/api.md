@@ -32,7 +32,14 @@ Farben: `#a47cff`, `#7ef0d0`, `#ff7a45`, `#4cc9ff`, `#ff4f7b`, `#f5c542`, `#62f0
 | Methode und Pfad | Eingabe | Antwort |
 |---|---|---|
 | `GET /api/me` | | `{ summary: HunterSummary, settings }` |
-| `PATCH /api/me` | `{ name?, color? }` | `{ hunter }` |
+| `PATCH /api/me` | `{ displayName? (null oder leer löscht), color?, theme? ("monarch"/"gate") }` | `{ hunter }` |
+| `PUT /api/me/avatar` | `{ preset ("01" bis "08") }` | `{ hunter }` |
+| `POST /api/me/avatar` | Bilddatei als Körper, `content-type: image/*`, höchstens 6 MB | `{ hunter }` (Bild als 256-px-WebP gespeichert) |
+| `DELETE /api/me/avatar` | | `{ hunter }` |
+| `GET /api/avatars/:file` | | Profilbild als WebP (nur angemeldet) |
+| `GET /api/plan` | | `{ plan: { today, current, upcoming, nextStart } }` |
+| `PUT /api/plan` | `{ items: [{ exerciseId? oder newExercise?, unit ("reps"/"minutes"/"km"), target }] }` | `{ plan }`, gilt ab `nextStart` |
+| `GET /api/badges` | | `{ badges, hunters: [{ hunter, earned }], progress }` |
 | `GET /api/me/settings` | | `{ settings }` |
 | `PATCH /api/me/settings` | `{ pushEnabled?, reminderEnabled?, reminderTime? ("HH:MM"), votePushEnabled?, soundEnabled? }` | `{ settings }` |
 
@@ -42,10 +49,10 @@ Farben: `#a47cff`, `#7ef0d0`, `#ff7a45`, `#4cc9ff`, `#ff4f7b`, `#f5c542`, `#62f0
 
 | Methode und Pfad | Eingabe | Antwort |
 |---|---|---|
-| `GET /api/board` | | `{ board: [{ hunter, status, totals, progress (0 bis 300) }] }` |
+| `GET /api/board` | | `{ board: [{ hunter, status, progress (0 bis 1) }] }` |
 | `GET /api/days/:date` | | `{ day, sets, sickReportedAt, bonus }` (eigene Daten) |
-| `POST /api/sets` | `{ date, exercise ("pushups"/"squats"/"situps"), reps (1 bis 500), clientId? }` | `{ set }` |
-| `PATCH /api/sets/:id` | `{ reps }` | `{ set }` |
+| `POST /api/sets` | `{ date, exerciseId, value, clientId? }`, Übung muss am Tag im Plan stehen, Wert in dessen Einheit | `{ set }` |
+| `PATCH /api/sets/:id` | `{ value }` | `{ set }` |
 | `DELETE /api/sets/:id` | | `{ ok }` |
 | `PUT /api/sick/:date` | | `{ ok }` |
 | `DELETE /api/sick/:date` | | `{ ok }` |
@@ -87,8 +94,8 @@ Farben: `#a47cff`, `#7ef0d0`, `#ff7a45`, `#4cc9ff`, `#ff4f7b`, `#f5c542`, `#62f0
 | `POST /api/feed/:id/reactions` | `{ reaction ("fire"/"muscle"/"laugh"/"eyes") }` | `{ active }` |
 | `GET /api/leaderboard?from=&to=` | | `{ overall, bonus, streaks }` |
 | `GET /api/hunters` | | `{ hunters }` |
-| `GET /api/hunters/:id` | | `{ summary, timeline, volume, verdicts }` |
-| `GET /api/stats?from=&to=&hunters=a,b` | | `{ series: [{ hunter, days }] }` |
+| `GET /api/hunters/:id` | | `{ summary, timeline, volume, plan: { current, upcoming }, verdicts }` |
+| `GET /api/stats?from=&to=&hunters=a,b` | | `{ series: [{ hunter, days, exercises }] }`, Tage mit `progress`, `reps`, `minutes`, `km`, `byExercise` |
 
 Feed-Typen: `joined`, `activity`, `quest_complete`, `level_up`, `rank_up`, `badge`, `missed`, `sick`, `missed_lifted`, `verdict`.
 
