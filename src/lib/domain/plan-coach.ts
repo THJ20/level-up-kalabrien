@@ -20,6 +20,8 @@ export function coachPrompt(input: {
 	fulfilled: number;
 	scoredDays: number;
 	today: LocalDate;
+	/** Wöchentlicher Wechsel: bisher trainierte und neu vorgeschlagene Muskelgruppen. */
+	focus?: { trained: readonly string[]; suggested: readonly string[] };
 }): string {
 	const daysLeft = Math.max(0, daysBetween(input.today, CHALLENGE_END) + 1);
 	const direction =
@@ -49,6 +51,13 @@ export function coachPrompt(input: {
 			? `In den letzten ${input.scoredDays} gewerteten Tagen habe ich den Plan an ${input.fulfilled} Tagen geschafft.`
 			: 'Ich stehe noch am Anfang.'
 	];
+	if (input.focus) {
+		lines.push(
+			input.focus.suggested.length > 0
+				? `Fokus diese Woche: Bring neue Muskelgruppen rein, vor allem ${input.focus.suggested.join(' und ')}. Bisher trainiert: ${input.focus.trained.join(', ')}. Tausche dafür 1 bis 2 Übungen, der Rest bleibt.`
+				: 'Fokus diese Woche: Mein Plan deckt schon alle Muskelgruppen ab. Tausche 1 bis 2 Übungen gegen Varianten, die ich noch nicht gemacht habe, der Rest bleibt.'
+		);
+	}
 	const notes = input.notes.trim();
 	if (notes) lines.push(`Hinweise von mir: ${notes}`);
 	lines.push(

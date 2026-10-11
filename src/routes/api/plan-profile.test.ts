@@ -12,6 +12,7 @@ import { GET as hunter } from './hunters/[id]/+server';
 import { POST as addSet } from './sets/+server';
 import { PUT as ratePlan } from './plan/rating/+server';
 import { POST as planPrompt } from './plan/prompt/+server';
+import { POST as rotate } from './plan/rotation/+server';
 
 const PASSWORD = 'geheim-genug-123';
 
@@ -145,5 +146,19 @@ describe('Bewertung und Prompt', () => {
 		expect(prompt.body.prompt).toContain('Hinweise von mir: Knie');
 		const plan = await call(getPlan, { path: '/api/plan', token: tobias.token });
 		expect(plan.body.progression.nextMonday).toBe('2026-10-19');
+	});
+});
+
+describe('Neue Muskelgruppen per API', () => {
+	it('zeigt Vorschläge, übernimmt einen Tausch und liefert den Fokus-Prompt', async () => {
+		const { tobias } = await team();
+		const plan = await call(getPlan, { path: '/api/plan', token: tobias.token });
+		expect(plan.body.rotation.swaps).toHaveLength(2);
+		const done = await call(rotate, { method: 'POST', path: '/api/plan/rotation', token: tobias.token, body: { accept: [0] } });
+		expect(done.body.rotation.decision).toBe('accepted');
+		const prompt = await call(planPrompt, { method: 'POST', path: '/api/plan/prompt', token: tobias.token, body: { focus: true } });
+		expect(prompt.body.prompt).toContain('Fokus diese Woche');
+		const wrong = await call(rotate, { method: 'POST', path: '/api/plan/rotation', token: tobias.token, body: { accept: ['x'] } });
+		expect(wrong.status).toBe(400);
 	});
 });

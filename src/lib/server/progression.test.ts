@@ -3,9 +3,9 @@ import { addDays, type LocalDate } from '#lib/domain/index.ts';
 import { createTestContext, insertHunter, seedFullDay } from './testing';
 import { listFeed } from './feed';
 import { savePlan } from './plans';
+import { planPrompt } from './coach';
 import {
 	applyWeeklyProgression,
-	planPrompt,
 	progressionOverview,
 	rateWeek,
 	upgradeNotice,
@@ -13,6 +13,7 @@ import {
 } from './progression';
 import { addSet } from './quest';
 import { planSaveCount, storedPlanOn } from './records';
+import { applyRotation } from './rotation';
 import { questSets } from './db/schema';
 
 function setup(nowIso = '2026-10-18T12:00:00Z') {
@@ -54,10 +55,12 @@ describe('Bewertung', () => {
 		expect(() => rateWeek(ctx, tobias, 'super' as 'right')).toThrow(expect.objectContaining({ code: 'invalid_input' }));
 	});
 
-	it('fragt sonntags nach, solange noch nicht bewertet', () => {
+	it('fragt sonntags nach, bis Bewertung und Muskelgruppen-Frage beantwortet sind', () => {
 		const { ctx, tobias } = setup('2026-10-18T12:00:00Z');
 		expect(progressionOverview(ctx, tobias).checkinDue).toBe(true);
 		rateWeek(ctx, tobias, 'right');
+		expect(progressionOverview(ctx, tobias).checkinDue).toBe(true);
+		applyRotation(ctx, tobias, []);
 		expect(progressionOverview(ctx, tobias).checkinDue).toBe(false);
 		ctx.clock.set('2026-10-17T12:00:00Z');
 		expect(progressionOverview(ctx, tobias).checkinDue).toBe(false);

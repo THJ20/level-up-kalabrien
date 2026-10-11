@@ -4,6 +4,7 @@ export * from './quest';
 export * from './plan-import';
 export * from './plan-coach';
 export * from './progression';
+export * from './exercise-library';
 export * from './bonus';
 export * from './timeline';
 export * from './streak';

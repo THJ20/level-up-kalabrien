@@ -115,3 +115,14 @@ Stand 10.10.2026, abgestimmt mit Tobias. Dieses Dokument ergänzt die Spezifikat
 - **Bewertung:** Nur der Hunter selbst sieht sie. Sonntags erscheint auf der Quest-Seite ein Check-in, bis bewertet ist. Auf der Plan-Seite geht es jederzeit, mit Vorschau auf den nächsten Montag.
 - **Plan-Coach:** Auf der Plan-Seite erzeugt die App jederzeit einen Prompt mit aktuellem Plan, Bewertung, Verlauf der letzten 14 Tage und eigenen Hinweisen. Vorgaben im Prompt sind 3 bis 5 Übungen (möglichst so viele wie bisher), 15 bis 30 Minuten pro Tag, ohne Geräte, nebenbei machbar, progressiv über mehr Wiederholungen, längere Zeiten oder schwerere Varianten und ab 30 Minuten nur noch schwerere Varianten. Kopieren oder per Teilen-Menü direkt an die KI-App schicken, Antwort wie beim Import einfügen.
 - **Installation:** Der Browser bietet die Installation nur einmal beim Laden an. Die App fängt das global ab. Auf der Quest-Seite erscheint am Handy ein ausblendbarer Hinweis mit Button (Android) oder Anleitung (iPhone). Das Manifest hat App-ID, Screenshots für den Installationsdialog und Kurzbefehle (Quest, Trainingsplan, Erfolge). Installation, Push, Teilen und Kopieren gehen nur über HTTPS.
+
+## 11. Feed und neue Muskelgruppen (Nachtrag 11.10.2026)
+
+- **Feed:** Einzelne Sätze der Daily Quest erscheinen nicht mehr. Es bleiben Ergebnisse (Daily Quest erfüllt oder nachgetragen, Level, Rang, Badges, Planänderungen, Strafen) und Zusatzübungen.
+- **Neue Muskelgruppen:** Der Sonntags-Check-in hat zwei Schritte. Erst die Bewertung, dann die Frage, ob neue Muskelgruppen in den Plan sollen.
+  - Die App kennt rund 30 Übungen ohne Geräte mit ihren Muskelgruppen (Brust und Trizeps, Rücken, Schultern, Rumpf, Oberschenkel, Po und Beinrückseite, Ausdauer).
+  - Sie schaut auf den aktuellen Plan und die letzten vier Planversionen. Neu vorgeschlagen werden die Gruppen, die im Plan fehlen, zuletzt trainierte später. Übungen aus früheren Plänen werden nicht noch einmal vorgeschlagen.
+  - Pro Woche 1 bis 2 Tausche. Getauscht wird zuerst die Übung, deren Muskelgruppen im Plan doppelt vorkommen. Jeden Tausch kann man einzeln an- oder abwählen.
+  - „Nein, Plan behalten“ lehnt für diese Woche ab. Übernommene Tausche gelten ab dem nächsten Tag (sonntags ab Montag). Die übrigen Übungen steigen dann trotzdem wie bei der automatischen Steigerung.
+  - Auf der Plan-Seite geht das jederzeit. Im KI-Prompt gibt es die Option „Fokus auf neue Muskelgruppen“.
+  - Die Entscheidung sieht nur der Hunter selbst.

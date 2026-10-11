@@ -12,7 +12,7 @@ import {
 import { todayOf, type ServiceContext } from './context';
 import { exercises, questSets, sickNotes } from './db/schema';
 import { forbidden, invalid, notFound } from './errors';
-import { appendEvent, recordActivity } from './feed';
+import { appendEvent } from './feed';
 import { applyHunterChange } from './pipeline';
 import { planOn } from './records';
 
@@ -91,11 +91,8 @@ export function addSet(ctx: ServiceContext, hunterId: string, input: SetInput): 
 			recordedAt: ctx.clock.now(),
 			clientId: input.clientId ?? null
 		};
+		// Einzelne Sätze erscheinen nicht im Feed, nur das Ergebnis (Daily Quest erfüllt).
 		ctx.db.insert(questSets).values(row).run();
-		recordActivity(ctx, hunterId, {
-			date: input.date,
-			quest: { exerciseId: item.exerciseId, name: item.name, unit: item.unit, value }
-		});
 		return row;
 	});
 }

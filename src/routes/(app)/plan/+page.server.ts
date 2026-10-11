@@ -3,6 +3,7 @@ import { getApp } from '#lib/server/app.ts';
 import { listExercises } from '#lib/server/bonus.ts';
 import { planOverview } from '#lib/server/plans.ts';
 import { progressionOverview } from '#lib/server/progression.ts';
+import { rotationOverview } from '#lib/server/rotation.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals, depends }) => {
@@ -12,6 +13,7 @@ export const load: PageServerLoad = ({ locals, depends }) => {
 	return {
 		plan: planOverview(ctx, locals.hunter.id),
 		progression: progressionOverview(ctx, locals.hunter.id),
+		rotation: rotationOverview(ctx, locals.hunter.id),
 		exercises: listExercises(ctx)
 	};
 };

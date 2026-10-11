@@ -135,6 +135,21 @@ export const planRatings = sqliteTable(
 	(table) => [primaryKey({ columns: [table.hunterId, table.weekStart] })]
 );
 
+/** Wöchentliche Entscheidung, ob neue Muskelgruppen in den Plan kommen. Nur der Hunter selbst sieht sie. */
+export const planRotations = sqliteTable(
+	'plan_rotations',
+	{
+		hunterId: text('hunter_id')
+			.notNull()
+			.references(() => hunters.id),
+		/** Montag der Woche, in der entschieden wurde. */
+		weekStart: text('week_start').notNull(),
+		decision: text('decision', { enum: ['accepted', 'declined'] }).notNull(),
+		createdAt: timestamp('created_at').notNull()
+	},
+	(table) => [primaryKey({ columns: [table.hunterId, table.weekStart] })]
+);
+
 export const sickNotes = sqliteTable(
 	'sick_notes',
 	{

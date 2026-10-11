@@ -6,16 +6,16 @@ import {
 	RATINGS,
 	RATING_STEP,
 	addDays,
-	coachPrompt,
 	daysBetween,
 	mondayOf,
 	nextProgression,
 	type LocalDate,
 	type ProgressionReason,
+	type ProgressionResult,
 	type Rating
 } from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
-import { planRatings, plans } from './db/schema';
+import { planRatings, planRotations, plans } from './db/schema';
 import { invalid } from './errors';
 import { getHunter, listActiveHunters } from './hunters';
 import { applyHunterChange } from './pipeline';
@@ -28,6 +28,18 @@ export const FIRST_PROGRESSION = addDays(CHALLENGE_START, 7);
 function fulfilledBetween(ctx: ServiceContext, hunterId: string, from: LocalDate, to: LocalDate): number {
 	return hunterTimeline(ctx, hunterId).filter((day) => day.date >= from && day.date <= to && day.status === 'fulfilled')
 		.length;
+}
+
+export type RotationDecision = 'accepted' | 'declined';
+
+export function rotationDecision(ctx: ServiceContext, hunterId: string, weekStart: LocalDate): RotationDecision | null {
+	return (
+		ctx.db
+			.select({ decision: planRotations.decision })
+			.from(planRotations)
+			.where(and(eq(planRotations.hunterId, hunterId), eq(planRotations.weekStart, weekStart)))
+			.get()?.decision ?? null
+	);
 }
 
 export function weekRating(ctx: ServiceContext, hunterId: string, weekStart: LocalDate): Rating | null {
@@ -103,23 +115,42 @@ export interface ProgressionOverview {
 	capped: boolean;
 }
 
-export function progressionOverview(ctx: ServiceContext, hunterId: string): ProgressionOverview {
+/**
+ * Was am nächsten Montag mit dem Plan passiert, unter der Annahme, dass der Rest der Woche erfüllt wird.
+ */
+export function previewNextWeek(
+	ctx: ServiceContext,
+	hunterId: string
+): { result: ProgressionResult | null; fulfilledThisWeek: number } {
 	const today = todayOf(ctx);
 	const weekStart = mondayOf(today);
-	const nextMonday = addDays(weekStart, 7);
-	const rating = weekRating(ctx, hunterId, weekStart);
 	const sunday = addDays(weekStart, 6);
 	const timeline = hunterTimeline(ctx, hunterId);
 	const fulfilledThisWeek = timeline.filter(
 		(day) => day.date >= weekStart && day.date <= today && day.status === 'fulfilled'
 	).length;
 	const todayDone = timeline.find((day) => day.date === today)?.status === 'fulfilled';
-	// Vorschau unter der Annahme, dass der Rest der Woche erfüllt wird.
 	const bestCase = fulfilledThisWeek + daysBetween(today, sunday) + (todayDone ? 0 : 1);
 	const current = storedPlanOn(ctx, hunterId, today);
-	const preview = current
-		? nextProgression({ items: current.items, factor: current.factor, rating, fulfilledLastWeek: bestCase })
+	const result = current
+		? nextProgression({
+				items: current.items,
+				factor: current.factor,
+				rating: weekRating(ctx, hunterId, weekStart),
+				fulfilledLastWeek: bestCase
+			})
 		: null;
+	return { result, fulfilledThisWeek };
+}
+
+export function progressionOverview(ctx: ServiceContext, hunterId: string): ProgressionOverview {
+	const today = todayOf(ctx);
+	const weekStart = mondayOf(today);
+	const nextMonday = addDays(weekStart, 7);
+	const rating = weekRating(ctx, hunterId, weekStart);
+	const sunday = addDays(weekStart, 6);
+	const current = storedPlanOn(ctx, hunterId, today);
+	const { result: preview, fulfilledThisWeek } = previewNextWeek(ctx, hunterId);
 	const nextStep = current
 		? nextProgression({ items: current.items, factor: current.factor, rating: 'right', fulfilledLastWeek: 7 })
 		: null;
@@ -130,7 +161,11 @@ export function progressionOverview(ctx: ServiceContext, hunterId: string): Prog
 		preview: preview ? { reason: preview.reason, step: preview.step } : { reason: 'step', step: RATING_STEP.right },
 		fulfilledThisWeek,
 		neededPerWeek: MIN_FULFILLED_FOR_STEP,
-		checkinDue: today === sunday && today >= CHALLENGE_START && sunday < CHALLENGE_END && rating === null,
+		checkinDue:
+			today === sunday &&
+			today >= CHALLENGE_START &&
+			sunday < CHALLENGE_END &&
+			(rating === null || rotationDecision(ctx, hunterId, weekStart) === null),
 		capped: nextStep?.reason === 'capped'
 	};
 }
@@ -145,22 +180,4 @@ export function upgradeNotice(ctx: ServiceContext, hunterId: string): { validFro
 	const changed = current.items.some((item, index) => item.target !== previous.items[index]?.target);
 	if (!changed) return null;
 	return { validFrom: today, step: Math.round((current.factor / previous.factor - 1) * 100) / 100 };
-}
-
-/** Prompt für die eigene KI mit aktuellem Plan, Bewertung und Verlauf der letzten 14 Tage. */
-export function planPrompt(ctx: ServiceContext, hunterId: string, notes: string): string {
-	const today = todayOf(ctx);
-	const current = storedPlanOn(ctx, hunterId, today);
-	const from = addDays(today, -14);
-	const recent = hunterTimeline(ctx, hunterId).filter(
-		(day) => day.date >= from && day.date < today && day.status !== 'warmup' && day.status !== 'unscored'
-	);
-	return coachPrompt({
-		items: current?.items ?? [],
-		rating: weekRating(ctx, hunterId, mondayOf(today)),
-		notes,
-		fulfilled: recent.filter((day) => day.status === 'fulfilled').length,
-		scoredDays: recent.length,
-		today
-	});
 }

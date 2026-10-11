@@ -6,6 +6,7 @@
 	import HunterCard from '#lib/ui/quest/HunterCard.svelte';
 	import QuestPanel from '#lib/ui/quest/QuestPanel.svelte';
 	import RatingPanel from '#lib/ui/plan/RatingPanel.svelte';
+	import RotationPanel from '#lib/ui/plan/RotationPanel.svelte';
 	import FeedEntry from '#lib/ui/FeedEntry.svelte';
 	import InstallBanner from '#lib/ui/InstallBanner.svelte';
 	import Panel from '#lib/ui/Panel.svelte';
@@ -40,11 +41,15 @@
 		<div class="columns">
 			<div class="main">
 				{#if data.progression.checkinDue && data.isToday}
-					<RatingPanel
-						progression={data.progression}
-						title="Wöchentlicher Check-in"
-						intro="Die Woche ist fast rum. Wie war dein Trainingsplan? Danach richtet sich, wie stark er ab Montag steigt. Nur du siehst deine Antwort."
-					/>
+					{#if data.progression.rating === null}
+						<RatingPanel
+							progression={data.progression}
+							title="Wöchentlicher Check-in · 1/2"
+							intro="Die Woche ist fast rum. Wie war dein Trainingsplan? Danach richtet sich, wie stark er ab Montag steigt. Nur du siehst deine Antwort."
+						/>
+					{:else}
+						<RotationPanel rotation={data.rotation} title="Wöchentlicher Check-in · 2/2" />
+					{/if}
 				{/if}
 				<DayNav date={data.date} today={data.summary.today} calendar={data.calendar} />
 				{#key data.date}

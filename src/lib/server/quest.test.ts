@@ -103,14 +103,11 @@ describe('Sätze', () => {
 		expect(feed.find((item) => item.type === 'level_up')?.payload).toEqual({ level: 2 });
 	});
 
-	it('schreibt Aktivität je Übung in den Feed und meldet Änderungen auf dem Bus', () => {
+	it('schreibt einzelne Sätze nicht in den Feed, meldet Änderungen aber auf dem Bus', () => {
 		const { ctx, tobias } = setup();
 		addSet(ctx, tobias, { date: '2026-10-12', exerciseId: 'pushups', value: 25 });
 		addSet(ctx, tobias, { date: '2026-10-12', exerciseId: 'pushups', value: 15 });
-		expect(listFeed(ctx, tobias)[0]).toMatchObject({
-			type: 'activity',
-			payload: { quest: [{ exerciseId: 'pushups', name: 'Liegestütze', unit: 'reps', value: 40 }], bonus: [] }
-		});
+		expect(feedTypes(ctx, tobias)).not.toContain('activity');
 		expect(ctx.published.at(-1)).toEqual(['board', 'feed', 'votes']);
 	});
 });

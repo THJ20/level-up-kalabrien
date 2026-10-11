@@ -37,9 +37,10 @@ Farben: `#a47cff`, `#7ef0d0`, `#ff7a45`, `#4cc9ff`, `#ff4f7b`, `#f5c542`, `#62f0
 | `POST /api/me/avatar` | Bilddatei als Körper, `content-type: image/*`, höchstens 6 MB | `{ hunter }` (Bild als 256-px-WebP gespeichert) |
 | `DELETE /api/me/avatar` | | `{ hunter }` |
 | `GET /api/avatars/:file` | | Profilbild als WebP (nur angemeldet) |
-| `GET /api/plan` | | `{ plan: { today, current, upcoming, nextStart }, progression: { weekStart, rating, nextMonday, preview, fulfilledThisWeek, neededPerWeek, checkinDue, capped } }` |
+| `GET /api/plan` | | `{ plan: { today, current, upcoming, nextStart }, progression: { weekStart, rating, nextMonday, preview, fulfilledThisWeek, neededPerWeek, checkinDue, capped }, rotation: { decision, trained, focus, swaps, effectiveFrom } }` |
 | `PUT /api/plan/rating` | `{ rating ("too_easy"/"right"/"too_hard") }` | `{ progression }`, gilt für die laufende Woche, nur selbst sichtbar |
-| `POST /api/plan/prompt` | `{ notes? }` | `{ prompt }` für die eigene KI |
+| `POST /api/plan/prompt` | `{ notes?, focus? }` | `{ prompt }` für die eigene KI, mit `focus` für neue Muskelgruppen |
+| `POST /api/plan/rotation` | `{ accept: [Index der Vorschläge] }`, leer = ablehnen | `{ rotation }` |
 | `PUT /api/plan` | `{ items: [{ exerciseId? oder newExercise?, unit ("reps"/"minutes"/"km"), target }] }` | `{ plan }`, gilt ab `nextStart` |
 | `GET /api/badges` | | `{ badges, hunters: [{ hunter, earned }], progress }` |
 | `GET /api/me/settings` | | `{ settings }` |

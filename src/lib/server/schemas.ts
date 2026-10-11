@@ -30,7 +30,9 @@ export const AvatarPresetBody = z.object({ preset: z.string().max(10) });
 
 export const RatingBody = z.object({ rating: z.enum(RATINGS) });
 
-export const PromptBody = z.object({ notes: z.string().max(500).optional() });
+export const PromptBody = z.object({ notes: z.string().max(500).optional(), focus: z.boolean().optional() });
+
+export const RotationBody = z.object({ accept: z.array(z.number().int()).max(5) });
 
 export const SettingsPatch = z.object({
 	pushEnabled: z.boolean().optional(),

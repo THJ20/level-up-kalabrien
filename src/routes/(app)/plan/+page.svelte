@@ -9,6 +9,7 @@
 	import PlanEditor from '#lib/ui/plan/PlanEditor.svelte';
 	import PlanImport from '#lib/ui/plan/PlanImport.svelte';
 	import RatingPanel from '#lib/ui/plan/RatingPanel.svelte';
+	import RotationPanel from '#lib/ui/plan/RotationPanel.svelte';
 	import { draftError, rowsFromPlan, toPayload, type DraftRow } from '#lib/ui/plan/draft.ts';
 
 	let { data } = $props();
@@ -95,6 +96,7 @@
 			</Panel>
 
 			<RatingPanel progression={data.progression} />
+			<RotationPanel rotation={data.rotation} />
 
 			<Panel title="Plan bearbeiten">
 				<PlanEditor bind:rows exercises={data.exercises} />

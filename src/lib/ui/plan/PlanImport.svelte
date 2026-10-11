@@ -13,6 +13,7 @@
 	type Mode = 'coach' | 'convert';
 	let mode = $state<Mode>('coach');
 	let notes = $state('');
+	let focus = $state(false);
 	let coachText = $state('');
 	let loadingPrompt = $state(false);
 	let text = $state('');
@@ -27,7 +28,7 @@
 		loadingPrompt = true;
 		error = '';
 		try {
-			coachText = (await apiFetch<{ prompt: string }>('/api/plan/prompt', { body: { notes } })).prompt;
+			coachText = (await apiFetch<{ prompt: string }>('/api/plan/prompt', { body: { notes, focus } })).prompt;
 		} catch (caught) {
 			error = errorMessage(caught);
 		} finally {
@@ -112,6 +113,9 @@
 			<label class="field">
 				<span>Hinweise an die KI (optional)</span>
 				<input class="input" maxlength="500" placeholder="z. B. Knie schonen, mehr Rumpf" bind:value={notes} />
+			</label>
+			<label class="focus">
+				<input type="checkbox" bind:checked={focus} /> Fokus auf neue Muskelgruppen (1 bis 2 Übungen tauschen)
 			</label>
 			<button class="btn" type="button" disabled={loadingPrompt} onclick={makePrompt}>
 				<Wand size={18} /> {coachText ? 'Prompt neu erzeugen' : 'Prompt erzeugen'}
@@ -222,6 +226,20 @@
 		margin-bottom: 14px;
 	}
 
+	.focus {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 10px;
+		font-size: 14px;
+	}
+
+	.focus input {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--line);
+	}
+
 	.prompt {
 		margin-top: 10px;
 	}
@@ -232,7 +250,7 @@
 		color: var(--dim);
 	}
 
-	.field + .btn {
+	.focus + .btn {
 		margin-top: 8px;
 	}
 

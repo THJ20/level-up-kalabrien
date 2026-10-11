@@ -18,6 +18,7 @@ const TABLES = [
 	'penalties',
 	'plan_items',
 	'plan_ratings',
+	'plan_rotations',
 	'plans',
 	'push_subscriptions',
 	'quest_sets',
@@ -41,7 +42,7 @@ describe('Datenbank', () => {
 
 		runMigrations(ctx.db.$client, ctx.clock.now());
 		const applied = ctx.db.$client.prepare('SELECT COUNT(*) FROM __migrations').pluck().get();
-		expect(applied).toBe(4);
+		expect(applied).toBe(5);
 	});
 
 	it('spielt den Startkatalog genau einmal ein', () => {

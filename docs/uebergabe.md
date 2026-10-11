@@ -31,6 +31,8 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
 - Import über einen Kopier-Prompt für die eigene KI. Die App erkennt die Antwort im Browser (Format `Übung | Ziel | Einheit`, JSON, CSV oder freie Zeilen), ohne eigene KI und ohne API-Key.
 - Jeden Montag steigt der Plan automatisch: zu leicht +10 %, passend +5 % (auch ohne Bewertung), zu schwer −10 %. Unter 5 erfüllten Tagen in der Vorwoche bleibt er gleich. Ab etwa 30 Minuten geschätzter Dauer pausiert die Steigerung. Selbst gespeicherte Pläne setzen die Grundlage neu.
 - Bewertung nur für den Hunter selbst sichtbar. Check-in sonntags auf der Quest-Seite, jederzeit auf der Plan-Seite.
+- Sonntags-Check-in in zwei Schritten: Bewertung, dann Vorschlag für 1 bis 2 Tausche hin zu wenig trainierten Muskelgruppen (Übungsbibliothek in `src/lib/domain/exercise-library.ts`, frühere Pläne zählen mit). Ablehnen behält den Plan.
+- Im Feed erscheinen keine einzelnen Sätze mehr, nur Ergebnisse und Zusatzübungen.
 - Der Plan-Coach erzeugt jederzeit einen Prompt mit aktuellem Plan, Bewertung, Verlauf und Hinweisen (15 bis 30 Minuten, ohne Geräte, progressiv).
 
 **Tage**
@@ -84,7 +86,7 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
   - `src/routes/api` ist die JSON-API, `src/routes/(app)` sind die Seiten (neu: `/plan`, `/erfolge`).
   - `src/lib/ui` und `src/lib/client` gehören zur Oberfläche, `src/service-worker` ist der Service Worker.
   - Farben nur über CSS-Variablen in `src/lib/ui/theme.css`, das Farbschema setzt der Server als `data-theme` am `<html>`.
-- Prüfen: `npm test` (271 Tests), `npx svelte-check --tsconfig ./tsconfig.json`, `npm run build`.
+- Prüfen: `npm test` (283 Tests), `npx svelte-check --tsconfig ./tsconfig.json`, `npm run build`.
 
 ## Lokal starten und testen
 
