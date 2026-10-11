@@ -62,7 +62,13 @@ describe('Sätze', () => {
 	it('nimmt Kilometer nach dem Plan des Tages', () => {
 		const { ctx, tobias } = setup('2026-10-12T10:00:00Z');
 		const run = listExercises(ctx).find((exercise) => exercise.name === 'Laufen/Joggen')!;
-		savePlan(ctx, tobias, [{ exerciseId: run.id, unit: 'km', target: 2.5 }]);
+		savePlan(ctx, tobias, [
+			{ exerciseId: run.id, unit: 'km', target: 2.5 },
+			{ exerciseId: 'pushups', unit: 'reps', target: 20 },
+			{ exerciseId: 'squats', unit: 'reps', target: 20 }
+		]);
+		addSet(ctx, tobias, { date: '2026-10-12', exerciseId: 'pushups', value: 20 });
+		addSet(ctx, tobias, { date: '2026-10-12', exerciseId: 'squats', value: 20 });
 		expect(() => addSet(ctx, tobias, { date: '2026-10-12', exerciseId: run.id, value: 1.25 })).toThrow(
 			expect.objectContaining({ code: 'invalid_input' })
 		);

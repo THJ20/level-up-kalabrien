@@ -24,7 +24,7 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
 ## Spielregeln, wie entschieden
 
 **Trainingsplan**
-- Jeder Spieler hat seinen eigenen Plan, er gilt jeden Tag gleich. Ein Planpunkt ist eine Übung aus dem gemeinsamen Katalog mit einem Ziel in Wiederholungen, Minuten oder Kilometern. 1 bis 12 Punkte.
+- Jeder Spieler hat seinen eigenen Plan, er gilt jeden Tag gleich. Ein Planpunkt ist eine Übung aus dem gemeinsamen Katalog mit einem Ziel in Wiederholungen, Minuten oder Kilometern. 3 bis 5 Übungen, schwerer wird es über Ziele und Varianten, nicht über mehr Übungen.
 - Startplan sind 100 Liegestütze, 100 Kniebeugen, 100 Sit-ups/Crunches (Kernübungen mit festen IDs `pushups`, `squats`, `situps`).
 - Änderungen gelten ab dem nächsten Tag. Solange jemand noch keinen Satz eingetragen hat, gilt sein Plan rückwirkend ab Beginn. Vergangene Tage werden immer am damals gültigen Plan gemessen.
 - Alle sehen die Pläne der anderen im Statusfenster. Eine Änderung steht im Feed.

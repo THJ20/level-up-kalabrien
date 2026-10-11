@@ -1,5 +1,5 @@
 import { CHALLENGE_END, DEPARTURE, daysBetween, type LocalDate } from './challenge';
-import { UNIT_LABELS, type PlanItem } from './plan';
+import { MAX_PLAN_ITEMS, MIN_PLAN_ITEMS, UNIT_LABELS, type PlanItem } from './plan';
 import { RATING_LABELS, type Rating } from './progression';
 
 const UNIT_WORD: Record<PlanItem['unit'], string> = { reps: 'Wdh', minutes: 'Min', km: 'km' };
@@ -26,8 +26,9 @@ export function coachPrompt(input: {
 		input.rating === 'too_hard'
 			? 'Mach ihn etwas leichter, aber so, dass ich trotzdem weiter Fortschritte mache.'
 			: input.rating === 'too_easy'
-				? 'Mach ihn deutlich fordernder.'
+				? 'Mach ihn deutlich fordernder, über mehr Wiederholungen oder schwerere Varianten, nicht über mehr Übungen.'
 				: 'Mach ihn etwas fordernder, damit ich weiter Fortschritte mache.';
+	const count = Math.min(MAX_PLAN_ITEMS, Math.max(MIN_PLAN_ITEMS, input.items.length));
 	const lines = [
 		'Du bist mein Trainer. Passe meinen täglichen Trainingsplan an.',
 		'',
@@ -36,8 +37,9 @@ export function coachPrompt(input: {
 		'Rahmen:',
 		'- Jeden Tag dasselbe Programm, in 15 bis 30 Minuten machbar.',
 		'- Nebenbei zu Hause oder draußen, ohne Geräte, keine Gym-Session.',
-		'- Progressiv: Der neue Plan ist fordernder als der alte. Sobald 30 Minuten erreicht sind, lieber schwerere Varianten (z. B. Diamond-Liegestütze, Jump Squats, längere Halteübungen) statt immer mehr Wiederholungen.',
-		'- Ausgewogen für Oberkörper, Beine und Rumpf, höchstens 12 Übungen.',
+		`- Genau ${MIN_PLAN_ITEMS} bis ${MAX_PLAN_ITEMS} Übungen. Mein Plan hat gerade ${input.items.length}, bleib möglichst bei ${count}. Mehr Übungen sind keine Steigerung.`,
+		'- Progressiv über mehr Wiederholungen, längere Zeiten oder eine schwerere Variante derselben Bewegung (z. B. Diamond-Liegestütze statt Liegestütze, Jump Squats statt Kniebeugen). Sobald 30 Minuten erreicht sind, nur noch schwerere Varianten.',
+		'- Ausgewogen für Oberkörper, Beine und Rumpf.',
 		'',
 		'Mein aktueller Plan (Tagesziele):',
 		...input.items.map((item) => `- ${item.name}: ${amount(item)}`),

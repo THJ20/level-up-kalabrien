@@ -25,7 +25,9 @@ export interface PlanVersion {
 	items: readonly PlanItem[];
 }
 
-export const MAX_PLAN_ITEMS = 12;
+/** Ein Plan hat 3 bis 5 Übungen. Steigerung kommt über Ziele und schwerere Varianten, nicht über mehr Übungen. */
+export const MIN_PLAN_ITEMS = 3;
+export const MAX_PLAN_ITEMS = 5;
 
 interface Limits {
 	min: number;
@@ -106,8 +108,9 @@ export function planFor(versions: readonly PlanVersion[], date: LocalDate): read
 
 /** Prüft einen Plan und liefert eine deutsche Fehlermeldung oder null. */
 export function planError(items: readonly Pick<PlanItem, 'exerciseId' | 'unit' | 'target'>[]): string | null {
-	if (items.length === 0) return 'Ein Plan braucht mindestens eine Übung.';
-	if (items.length > MAX_PLAN_ITEMS) return `Ein Plan hat höchstens ${MAX_PLAN_ITEMS} Übungen.`;
+	if (items.length < MIN_PLAN_ITEMS || items.length > MAX_PLAN_ITEMS) {
+		return `Ein Plan hat ${MIN_PLAN_ITEMS} bis ${MAX_PLAN_ITEMS} Übungen.`;
+	}
 	const seen = new Set<string>();
 	for (const item of items) {
 		if (seen.has(item.exerciseId)) return 'Jede Übung darf nur einmal im Plan stehen.';

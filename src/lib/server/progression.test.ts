@@ -101,7 +101,11 @@ describe('Wochensteigerung', () => {
 		expect(storedPlanOn(ctx, tobias, '2026-10-26')).toMatchObject({ auto: true, factor: 1.1025 });
 		expect(targets(ctx, tobias, '2026-10-26')).toEqual([110, 110, 110]);
 
-		savePlan(ctx, tobias, [{ exerciseId: 'pushups', unit: 'reps', target: 50 }]);
+		savePlan(ctx, tobias, [
+			{ exerciseId: 'pushups', unit: 'reps', target: 50 },
+			{ exerciseId: 'squats', unit: 'reps', target: 100 },
+			{ exerciseId: 'situps', unit: 'reps', target: 100 }
+		]);
 		expect(storedPlanOn(ctx, tobias, '2026-10-27')).toMatchObject({ auto: false, factor: 1 });
 	});
 
@@ -109,10 +113,14 @@ describe('Wochensteigerung', () => {
 		const { ctx, tobias } = setup();
 		fulfill(ctx, tobias, '2026-10-12', 7);
 		addSet(ctx, tobias, { date: '2026-10-18', exerciseId: 'pushups', value: 10 });
-		savePlan(ctx, tobias, [{ exerciseId: 'squats', unit: 'reps', target: 80 }]);
+		savePlan(ctx, tobias, [
+			{ exerciseId: 'squats', unit: 'reps', target: 80 },
+			{ exerciseId: 'pushups', unit: 'reps', target: 100 },
+			{ exerciseId: 'situps', unit: 'reps', target: 100 }
+		]);
 		ctx.clock.set('2026-10-18T22:30:00Z');
 		expect(applyWeeklyProgression(ctx)).toEqual([]);
-		expect(targets(ctx, tobias, '2026-10-19')).toEqual([80]);
+		expect(targets(ctx, tobias, '2026-10-19')).toEqual([80, 100, 100]);
 
 		const early = setup('2026-10-11T23:00:00Z');
 		expect(applyWeeklyProgression(early.ctx)).toEqual([]);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestContext, insertHunter } from './testing';
 import { listExercises } from './bonus';
 import { listFeed } from './feed';
-import { planOverview, savePlan } from './plans';
+import { planOverview, savePlan, type PlanItemInput } from './plans';
 import { addSet } from './quest';
 import { hunterTimeline, loadPlanVersions, planSaveCount } from './records';
 import { listHunterBadges } from './badges';
@@ -32,12 +32,13 @@ describe('Trainingsplan', () => {
 		const { ctx, tobias, byName } = setup();
 		savePlan(ctx, tobias, [
 			{ exerciseId: 'pushups', unit: 'reps', target: 50 },
-			{ exerciseId: byName('Seilspringen').id, unit: 'minutes', target: 10 }
+			{ exerciseId: byName('Seilspringen').id, unit: 'minutes', target: 10 },
+			{ exerciseId: 'squats', unit: 'reps', target: 60 }
 		]);
 		const versions = loadPlanVersions(ctx, tobias);
 		expect(versions).toHaveLength(1);
 		expect(versions[0].validFrom).toBe('2026-10-09');
-		expect(hunterTimeline(ctx, tobias)[3].plan.map((item) => item.name)).toEqual(['Liegestütze', 'Seilspringen']);
+		expect(hunterTimeline(ctx, tobias)[3].plan.map((item) => item.name)).toEqual(['Liegestütze', 'Seilspringen', 'Kniebeugen']);
 		expect(planSaveCount(ctx, tobias)).toBe(1);
 		expect(listHunterBadges(ctx, tobias).map((badge) => badge.badgeId)).toContain('architect');
 	});
@@ -47,19 +48,32 @@ describe('Trainingsplan', () => {
 		addSet(ctx, tobias, { date: '2026-10-14', exerciseId: 'pushups', value: 10 });
 		expect(planOverview(ctx, tobias).nextStart).toBe('2026-10-15');
 
-		savePlan(ctx, tobias, [{ exerciseId: 'pushups', unit: 'reps', target: 120 }]);
+		savePlan(ctx, tobias, [
+			{ exerciseId: 'pushups', unit: 'reps', target: 120 },
+			{ exerciseId: 'squats', unit: 'reps', target: 100 },
+			{ exerciseId: 'situps', unit: 'reps', target: 100 }
+		]);
 		ctx.clock.advance(1000);
 		const plank = byName('Burpees');
-		const overview = savePlan(ctx, tobias, [{ exerciseId: plank.id, unit: 'reps', target: 40 }]);
+		const overview = savePlan(ctx, tobias, [
+			{ exerciseId: plank.id, unit: 'reps', target: 40 },
+			{ exerciseId: 'squats', unit: 'reps', target: 100 },
+			{ exerciseId: 'situps', unit: 'reps', target: 100 }
+		]);
 		expect(overview.current.map((item) => item.exerciseId)).toEqual(['pushups', 'squats', 'situps']);
-		expect(overview.upcoming).toMatchObject({ validFrom: '2026-10-15', items: [{ name: 'Burpees', target: 40 }] });
+		expect(overview.upcoming?.validFrom).toBe('2026-10-15');
+		expect(overview.upcoming?.items[0]).toMatchObject({ name: 'Burpees', target: 40 });
 		expect(loadPlanVersions(ctx, tobias).map((version) => version.validFrom)).toEqual(['2026-10-09', '2026-10-15']);
 
 		const changed = listFeed(ctx, tobias).filter((item) => item.type === 'plan_changed');
 		expect(changed).toHaveLength(2);
 		expect(changed[0].payload).toEqual({
 			validFrom: '2026-10-15',
-			items: [{ name: 'Burpees', unit: 'reps', target: 40 }]
+			items: [
+				{ name: 'Burpees', unit: 'reps', target: 40 },
+				{ name: 'Kniebeugen', unit: 'reps', target: 100 },
+				{ name: 'Sit-ups/Crunches', unit: 'reps', target: 100 }
+			]
 		});
 	});
 
@@ -67,11 +81,13 @@ describe('Trainingsplan', () => {
 		const { ctx, tobias } = setup();
 		savePlan(ctx, tobias, [
 			{ newExercise: { name: 'Plank', kind: 'time' }, unit: 'minutes', target: 3 },
-			{ newExercise: { name: 'Hampelmänner', kind: 'reps', secondsPerRep: 2 }, unit: 'reps', target: 50 }
+			{ newExercise: { name: 'Hampelmänner', kind: 'reps', secondsPerRep: 2 }, unit: 'reps', target: 50 },
+			{ exerciseId: 'pushups', unit: 'reps', target: 40 }
 		]);
 		expect(planOverview(ctx, tobias).current.map((item) => [item.name, item.unit, item.secondsPerRep])).toEqual([
 			['Plank', 'minutes', null],
-			['Hampelmänner', 'reps', 2]
+			['Hampelmänner', 'reps', 2],
+			['Liegestütze', 'reps', 3]
 		]);
 		expect(listExercises(ctx).some((exercise) => exercise.name === 'Plank')).toBe(true);
 	});
@@ -79,18 +95,31 @@ describe('Trainingsplan', () => {
 	it('prüft Einheit, Ziel, Anzahl und doppelte Übungen', () => {
 		const { ctx, tobias, byName } = setup();
 		const invalid = expect.objectContaining({ code: 'invalid_input' });
+		const withCore = (item: PlanItemInput) => [
+			item,
+			{ exerciseId: 'squats', unit: 'reps' as const, target: 100 },
+			{ exerciseId: 'situps', unit: 'reps' as const, target: 100 }
+		];
 		expect(() => savePlan(ctx, tobias, [])).toThrow(invalid);
-		expect(() => savePlan(ctx, tobias, [{ exerciseId: 'pushups', unit: 'minutes', target: 5 }])).toThrow(invalid);
-		expect(() => savePlan(ctx, tobias, [{ exerciseId: byName('Radfahren').id, unit: 'reps', target: 5 }])).toThrow(invalid);
-		expect(() => savePlan(ctx, tobias, [{ exerciseId: 'pushups', unit: 'reps', target: 0 }])).toThrow(invalid);
+		expect(() => savePlan(ctx, tobias, withCore({ exerciseId: 'pushups', unit: 'reps', target: 10 }).slice(0, 2))).toThrow(
+			/3 bis 5/
+		);
 		expect(() =>
 			savePlan(ctx, tobias, [
-				{ exerciseId: 'pushups', unit: 'reps', target: 10 },
-				{ exerciseId: 'pushups', unit: 'reps', target: 20 }
+				...withCore({ exerciseId: 'pushups', unit: 'reps', target: 10 }),
+				{ exerciseId: byName('Burpees').id, unit: 'reps', target: 10 },
+				{ exerciseId: byName('Dips').id, unit: 'reps', target: 10 },
+				{ exerciseId: byName('Klimmzüge').id, unit: 'reps', target: 10 }
 			])
-		).toThrow(invalid);
-		expect(() => savePlan(ctx, tobias, [{ unit: 'reps', target: 10 }])).toThrow(invalid);
-		expect(() => savePlan(ctx, tobias, [{ exerciseId: 'unbekannt', unit: 'reps', target: 10 }])).toThrow(
+		).toThrow(/3 bis 5/);
+		expect(() => savePlan(ctx, tobias, withCore({ exerciseId: 'pushups', unit: 'minutes', target: 5 }))).toThrow(invalid);
+		expect(() => savePlan(ctx, tobias, withCore({ exerciseId: byName('Radfahren').id, unit: 'reps', target: 5 }))).toThrow(
+			invalid
+		);
+		expect(() => savePlan(ctx, tobias, withCore({ exerciseId: 'pushups', unit: 'reps', target: 0 }))).toThrow(invalid);
+		expect(() => savePlan(ctx, tobias, withCore({ exerciseId: 'squats', unit: 'reps', target: 20 }))).toThrow(/nur einmal/);
+		expect(() => savePlan(ctx, tobias, withCore({ unit: 'reps', target: 10 }))).toThrow(invalid);
+		expect(() => savePlan(ctx, tobias, withCore({ exerciseId: 'unbekannt', unit: 'reps', target: 10 }))).toThrow(
 			expect.objectContaining({ code: 'not_found' })
 		);
 		expect(planSaveCount(ctx, tobias)).toBe(0);

@@ -88,7 +88,11 @@ describe('Plan-Prompt', () => {
 		expect(prompt).toContain('ohne Geräte');
 		expect(prompt).toContain('- Liegestütze: 100 Wdh.');
 		expect(prompt).toContain('- Plank: 3 Min.');
-		expect(prompt).toContain('Meine Einschätzung: Zu leicht. Mach ihn deutlich fordernder.');
+		expect(prompt).toContain(
+			'Meine Einschätzung: Zu leicht. Mach ihn deutlich fordernder, über mehr Wiederholungen oder schwerere Varianten, nicht über mehr Übungen.'
+		);
+		expect(prompt).toContain('Genau 3 bis 5 Übungen. Mein Plan hat gerade 4, bleib möglichst bei 4. Mehr Übungen sind keine Steigerung.');
+		expect(prompt).not.toContain('12 Übungen');
 		expect(prompt).toContain('an 12 Tagen geschafft');
 		expect(prompt).toContain('Hinweise von mir: Knie schonen');
 		expect(prompt).toContain('noch 191 Tage');

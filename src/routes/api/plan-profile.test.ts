@@ -49,15 +49,16 @@ describe('Trainingsplan-API', () => {
 			body: {
 				items: [
 					{ exerciseId: 'pushups', unit: 'reps', target: 80 },
-					{ newExercise: { name: 'Plank', kind: 'time' }, unit: 'minutes', target: 3 }
+					{ newExercise: { name: 'Plank', kind: 'time' }, unit: 'minutes', target: 3 },
+					{ exerciseId: 'squats', unit: 'reps', target: 60 }
 				]
 			}
 		});
 		expect(saved.status).toBe(200);
-		expect(saved.body.plan.current.map((item: { name: string }) => item.name)).toEqual(['Liegestütze', 'Plank']);
+		expect(saved.body.plan.current.map((item: { name: string }) => item.name)).toEqual(['Liegestütze', 'Plank', 'Kniebeugen']);
 
 		const seen = await call(hunter, { path: `/api/hunters/${tobias.id}`, token: niklas.token, params: { id: tobias.id } });
-		expect(seen.body.plan.current.map((item: { target: number }) => item.target)).toEqual([80, 3]);
+		expect(seen.body.plan.current.map((item: { target: number }) => item.target)).toEqual([80, 3, 60]);
 
 		const plankId = saved.body.plan.current[1].exerciseId;
 		const set = await call(addSet, {

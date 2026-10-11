@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Check, ClipboardCopy, FileUp, Share2, Sparkles, Wand } from '@lucide/svelte';
-	import { PLAN_IMPORT_PROMPT, UNIT_LABELS, parsePlanText } from '#lib/domain/index.ts';
+	import { MAX_PLAN_ITEMS, PLAN_IMPORT_PROMPT, UNIT_LABELS, parsePlanText } from '#lib/domain/index.ts';
 	import { apiFetch, errorMessage } from '#lib/client/api.ts';
 	import { decimal } from '#lib/client/format.ts';
 	import Segmented from '../Segmented.svelte';
@@ -184,6 +184,12 @@
 					{#each preview.skipped as line, index (index)}<li>{line}</li>{/each}
 				</ul>
 			</details>
+		{/if}
+		{#if preview.rows.length > MAX_PLAN_ITEMS}
+			<p class="form-error">
+				Das sind mehr als {MAX_PLAN_ITEMS} Übungen. Entferne im Editor die überzähligen oder lass dir den Plan neu
+				erzeugen.
+			</p>
 		{/if}
 		<p class="hint">Im Editor oben kannst du danach noch alles anpassen, bevor du speicherst.</p>
 		<div class="actions">

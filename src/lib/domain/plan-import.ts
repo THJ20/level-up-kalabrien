@@ -22,7 +22,8 @@ Regeln:
 - Einheit ist genau eines von: Wdh, Min, km
 - Sätze rechnest du zusammen, z. B. wird 3 x 20 Kniebeugen zu 60 Wdh.
 - Halteübungen und Zeitangaben gibst du in ganzen Minuten an, Sekunden rundest du auf.
-- Höchstens 12 Übungen, kurze deutsche Übungsnamen.
+- Genau 3 bis 5 Übungen. Hat mein Plan mehr, fasse ähnliche zusammen und nimm die wichtigsten für Oberkörper, Beine und Rumpf.
+- Kurze deutsche Übungsnamen.
 - Gib nur den Codeblock aus, ohne Erklärung.
 
 Beispiel:

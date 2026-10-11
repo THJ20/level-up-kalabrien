@@ -23,7 +23,7 @@ Stand 10.10.2026, abgestimmt mit Tobias. Dieses Dokument ergänzt die Spezifikat
 - Ein Planpunkt ist eine Übung aus dem gemeinsamen Katalog mit einem Ziel in einer Einheit.
   - Wiederholungs-Übungen haben die Einheit Wiederholungen (1 bis 1000).
   - Zeit-Übungen haben Minuten (1 bis 600) oder, wenn sie eine Strecke erfassen, wahlweise Kilometer (0,1 bis 100).
-- Ein Plan hat 1 bis 12 Punkte, jede Übung höchstens einmal.
+- Ein Plan hat 3 bis 5 Übungen, jede höchstens einmal (Nachtrag 11.10.2026). Schwerer wird er über die Ziele und schwerere Varianten, nicht über mehr Übungen.
 - Der Katalog bekommt die Kernübungen **Liegestütze, Kniebeugen und Sit-ups/Crunches** (Wiederholungen, je 3 Sekunden). Sie haben feste IDs `pushups`, `squats`, `situps`.
 - **Startplan** für jeden neuen Spieler ist 100 Liegestütze, 100 Kniebeugen, 100 Sit-ups/Crunches, gültig ab dem ersten Aufwärmtag.
 - **Änderungen gelten ab dem nächsten Tag.** Die heutige Quest ändert sich nie mitten am Tag. Vergangene Tage werden immer am damals gültigen Plan gemessen.
@@ -113,5 +113,5 @@ Stand 10.10.2026, abgestimmt mit Tobias. Dieses Dokument ergänzt die Spezifikat
   - Erste Steigerung am Mo 19.10.2026, letzte am Mo 26.04.2027. Untergrenze ist die Hälfte des Ausgangsplans.
   - Am Montag zeigt die App „QUEST UPGRADED“ oder „QUEST ADJUSTED“ mit Prozent. Im Feed erscheint nichts.
 - **Bewertung:** Nur der Hunter selbst sieht sie. Sonntags erscheint auf der Quest-Seite ein Check-in, bis bewertet ist. Auf der Plan-Seite geht es jederzeit, mit Vorschau auf den nächsten Montag.
-- **Plan-Coach:** Auf der Plan-Seite erzeugt die App jederzeit einen Prompt mit aktuellem Plan, Bewertung, Verlauf der letzten 14 Tage und eigenen Hinweisen. Vorgaben im Prompt sind 15 bis 30 Minuten pro Tag, ohne Geräte, nebenbei machbar, progressiv und ab 30 Minuten schwerere Varianten statt mehr Wiederholungen. Kopieren oder per Teilen-Menü direkt an die KI-App schicken, Antwort wie beim Import einfügen.
+- **Plan-Coach:** Auf der Plan-Seite erzeugt die App jederzeit einen Prompt mit aktuellem Plan, Bewertung, Verlauf der letzten 14 Tage und eigenen Hinweisen. Vorgaben im Prompt sind 3 bis 5 Übungen (möglichst so viele wie bisher), 15 bis 30 Minuten pro Tag, ohne Geräte, nebenbei machbar, progressiv über mehr Wiederholungen, längere Zeiten oder schwerere Varianten und ab 30 Minuten nur noch schwerere Varianten. Kopieren oder per Teilen-Menü direkt an die KI-App schicken, Antwort wie beim Import einfügen.
 - **Installation:** Der Browser bietet die Installation nur einmal beim Laden an. Die App fängt das global ab. Auf der Quest-Seite erscheint am Handy ein ausblendbarer Hinweis mit Button (Android) oder Anleitung (iPhone). Das Manifest hat App-ID, Screenshots für den Installationsdialog und Kurzbefehle (Quest, Trainingsplan, Erfolge). Installation, Push, Teilen und Kopieren gehen nur über HTTPS.

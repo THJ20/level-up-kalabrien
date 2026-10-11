@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	MAX_PLAN_ITEMS,
+	MIN_PLAN_ITEMS,
 	defaultPlan,
 	defaultPlanItems,
 	isValidSetValue,
@@ -63,13 +64,16 @@ describe('Prüfung', () => {
 		expect(roundToUnit('reps', 59.6)).toBe(60);
 	});
 
-	it('meldet leere, zu lange und doppelte Pläne sowie falsche Ziele', () => {
+	it('verlangt 3 bis 5 Übungen, jede nur einmal, mit gültigem Ziel', () => {
+		const ofSize = (count: number) =>
+			Array.from({ length: count }, (_, index) => ({ ...plank, exerciseId: `e${index}` }));
 		expect(planError(defaultPlanItems())).toBeNull();
-		expect(planError([])).toMatch(/mindestens eine/);
-		const many = Array.from({ length: MAX_PLAN_ITEMS + 1 }, (_, index) => ({ ...plank, exerciseId: `e${index}` }));
-		expect(planError(many)).toMatch(/höchstens 12/);
-		expect(planError([plank, plank])).toMatch(/nur einmal/);
-		expect(planError([{ ...plank, target: 0 }])).toMatch(/zwischen 1 und 600/);
+		expect(planError(ofSize(MAX_PLAN_ITEMS))).toBeNull();
+		expect(planError([])).toMatch(/3 bis 5 Übungen/);
+		expect(planError(ofSize(MIN_PLAN_ITEMS - 1))).toMatch(/3 bis 5 Übungen/);
+		expect(planError(ofSize(MAX_PLAN_ITEMS + 1))).toMatch(/3 bis 5 Übungen/);
+		expect(planError([plank, plank, { ...plank, exerciseId: 'x' }])).toMatch(/nur einmal/);
+		expect(planError([{ ...plank, target: 0 }, ...ofSize(2)])).toMatch(/zwischen 1 und 600/);
 	});
 
 	it('bietet passende Einheiten je Übungsart an', () => {

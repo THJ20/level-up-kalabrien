@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ArrowDown, ArrowUp, Plus, Sparkles, Trash2 } from '@lucide/svelte';
-	import { MAX_PLAN_ITEMS, TARGET_LIMITS, UNIT_LABELS, unitsFor, type PlanUnit } from '#lib/domain/index.ts';
+	import { MAX_PLAN_ITEMS, MIN_PLAN_ITEMS, TARGET_LIMITS, UNIT_LABELS, unitsFor, type PlanUnit } from '#lib/domain/index.ts';
 	import ExerciseForm from '../quest/ExerciseForm.svelte';
 	import Sheet from '../Sheet.svelte';
 	import { defaultTarget, rowFromExercise, targetHint, unitsOfRow, type CatalogExercise, type DraftRow } from './draft';
@@ -105,6 +105,10 @@
 <button class="btn add" type="button" disabled={rows.length >= MAX_PLAN_ITEMS} onclick={openAdd}>
 	<Plus size={18} /> Übung hinzufügen
 </button>
+<p class="hint count">
+	{rows.length} von {MIN_PLAN_ITEMS} bis {MAX_PLAN_ITEMS} Übungen.
+	{#if rows.length > MAX_PLAN_ITEMS}Entferne {rows.length - MAX_PLAN_ITEMS}, schwerer wird es über Ziele und Varianten.{:else if rows.length < MIN_PLAN_ITEMS}Es {MIN_PLAN_ITEMS - rows.length === 1 ? 'fehlt noch eine' : `fehlen noch ${MIN_PLAN_ITEMS - rows.length}`}.{/if}
+</p>
 
 <Sheet bind:open={adding} title="Übung zum Plan hinzufügen">
 	{#if creating}
@@ -262,6 +266,10 @@
 
 	.add {
 		margin-top: 12px;
+	}
+
+	.count {
+		margin-top: 8px;
 	}
 
 	.form {

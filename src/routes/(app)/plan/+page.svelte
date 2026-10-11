@@ -22,7 +22,7 @@
 
 	const basis = $derived<readonly PlanItem[]>(data.plan.upcoming?.items ?? data.plan.current);
 	const retroactive = $derived(data.plan.nextStart === WARMUP_START);
-	const validation = $derived(rows.length > 0 ? draftError(rows) : 'Ein Plan braucht mindestens eine Übung.');
+	const validation = $derived(draftError(rows));
 
 	const signature = (list: readonly DraftRow[]) =>
 		JSON.stringify(list.map((row) => [row.exerciseId, row.newExercise?.name ?? null, row.unit, Number(row.target)]));
