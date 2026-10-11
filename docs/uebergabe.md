@@ -117,7 +117,7 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
   4. SSH-Zugang oder Deployment durch ihn
   5. Backups
   6. Freier RAM und Speicher (die App braucht etwa 256 MB RAM und unter 1 GB Platte)
-  7. GitHub-Account für den Repo-Zugriff
+  7. ~~GitHub-Account für den Repo-Zugriff~~ erledigt, Niklas hat Zugriff auf das Repo (11.10.2026)
 - Push-Benachrichtigungen und der Offline-Modus lassen sich erst auf echten Handys mit HTTPS testen.
 - Die Challenge startet am 12.10.2026, die App läuft dann aber noch nicht auf dem Server. Alle tragen ihre Tage bis zum Go-live nach, das zählt voll.
 - In der Git-Historie stehen in alten Commits noch Pfade mit Bezug zu Firmenwerkzeugen. Umschreiben (Force-Push) nur nach ausdrücklichem Ja.
