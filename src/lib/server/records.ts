@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, lte } from 'drizzle-orm';
 import {
 	buildTimeline,
 	planFor,
@@ -7,7 +7,8 @@ import {
 	type HunterRecords,
 	type LocalDate,
 	type PlanItem,
-	type PlanVersion
+	type PlanVersion,
+	type ProgressionItem
 } from '#lib/domain/index.ts';
 import { todayOf, type ServiceContext } from './context';
 import { bonusEntries, exercises, planItems, plans, questSets, sickNotes } from './db/schema';
@@ -56,9 +57,47 @@ export function planSaveCount(ctx: ServiceContext, hunterId: string): number {
 		ctx.db
 			.select({ value: count() })
 			.from(plans)
-			.where(and(eq(plans.hunterId, hunterId), eq(plans.isDefault, false)))
+			.where(and(eq(plans.hunterId, hunterId), eq(plans.isDefault, false), eq(plans.auto, false)))
 			.get()?.value ?? 0
 	);
+}
+
+export interface StoredPlanVersion {
+	id: string;
+	validFrom: LocalDate;
+	auto: boolean;
+	factor: number;
+	items: ProgressionItem[];
+}
+
+/** Planversion, die an einem Tag gilt, mit Steigerungsfaktor und Ausgangszielen. */
+export function storedPlanOn(ctx: ServiceContext, hunterId: string, date: LocalDate): StoredPlanVersion | null {
+	const version = ctx.db
+		.select()
+		.from(plans)
+		.where(and(eq(plans.hunterId, hunterId), lte(plans.validFrom, date)))
+		.orderBy(desc(plans.validFrom))
+		.limit(1)
+		.get();
+	if (!version) return null;
+	const items = ctx.db
+		.select({ item: planItems, exercise: exercises })
+		.from(planItems)
+		.innerJoin(exercises, eq(planItems.exerciseId, exercises.id))
+		.where(eq(planItems.planId, version.id))
+		.orderBy(asc(planItems.position))
+		.all()
+		.map(
+			({ item, exercise }): ProgressionItem => ({
+				exerciseId: exercise.id,
+				name: exercise.name,
+				unit: item.unit,
+				target: item.target,
+				baseTarget: item.baseTarget ?? item.target,
+				secondsPerRep: exercise.secondsPerRep
+			})
+		);
+	return { id: version.id, validFrom: version.validFrom, auto: version.auto, factor: version.factor, items };
 }
 
 /** Plan, der an einem Tag für den Hunter gilt. */

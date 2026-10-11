@@ -22,15 +22,27 @@ import { getHunter } from './hunters';
 import { applyHunterChange } from './pipeline';
 import { loadPlanVersions } from './records';
 
-function insertVersion(
+/** Speichert eine Planversion. Selbst gespeicherte Pläne setzen die Grundlage der Steigerung neu. */
+export function insertVersion(
 	ctx: ServiceContext,
 	hunterId: string,
 	validFrom: LocalDate,
-	items: readonly Pick<PlanItem, 'exerciseId' | 'unit' | 'target'>[],
-	isDefault: boolean
+	items: readonly (Pick<PlanItem, 'exerciseId' | 'unit' | 'target'> & { baseTarget?: number })[],
+	options: { isDefault?: boolean; auto?: boolean; factor?: number } = {}
 ): void {
 	const id = crypto.randomUUID();
-	ctx.db.insert(plans).values({ id, hunterId, validFrom, isDefault, createdAt: ctx.clock.now() }).run();
+	ctx.db
+		.insert(plans)
+		.values({
+			id,
+			hunterId,
+			validFrom,
+			isDefault: options.isDefault ?? false,
+			auto: options.auto ?? false,
+			factor: options.factor ?? 1,
+			createdAt: ctx.clock.now()
+		})
+		.run();
 	ctx.db
 		.insert(planItems)
 		.values(
@@ -39,7 +51,8 @@ function insertVersion(
 				position,
 				exerciseId: item.exerciseId,
 				unit: item.unit,
-				target: item.target
+				target: item.target,
+				baseTarget: item.baseTarget ?? item.target
 			}))
 		)
 		.run();
@@ -49,7 +62,7 @@ function insertVersion(
 export function ensureStartPlan(ctx: ServiceContext, hunterId: string): void {
 	const existing = ctx.db.select({ id: plans.id }).from(plans).where(eq(plans.hunterId, hunterId)).limit(1).get();
 	if (existing) return;
-	insertVersion(ctx, hunterId, WARMUP_START, defaultPlanItems(), true);
+	insertVersion(ctx, hunterId, WARMUP_START, defaultPlanItems(), { isDefault: true });
 }
 
 /** Startpläne für alle Hunter ohne Plan, z. B. nach einer Migration. */
@@ -133,7 +146,7 @@ export function savePlan(ctx: ServiceContext, hunterId: string, input: readonly 
 				ctx.db.delete(plans).where(inArray(plans.id, later.map((row) => row.id))).run();
 			}
 		}
-		insertVersion(ctx, hunterId, validFrom, items, false);
+		insertVersion(ctx, hunterId, validFrom, items);
 		appendEvent(ctx, hunterId, 'plan_changed', {
 			validFrom,
 			items: items.map(({ name, unit, target }) => ({ name, unit, target }))

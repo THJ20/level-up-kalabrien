@@ -102,3 +102,16 @@ Stand 10.10.2026, abgestimmt mit Tobias. Dieses Dokument ergänzt die Spezifikat
 - Die bisherigen Testdaten werden verworfen. Die Migration legt die Tabelle für Sätze neu an.
 - Neue Tabellen `plans` (Version mit `valid_from`) und `plan_items`.
 - Neue Spalten an `hunters`: `display_name`, `display_name_key`, `avatar`, `theme`.
+
+## 10. Steigerung, Check-in und Plan-Coach (Nachtrag 11.10.2026)
+
+- **Wöchentliche Steigerung:** Jeden Montag um Mitternacht bekommt jeder Hunter automatisch eine neue Planversion.
+  - Bewertung der Vorwoche: zu leicht +10 %, passend +5 %, zu schwer −10 %. Ohne Bewertung gilt passend.
+  - Wer in der Vorwoche weniger als 5 von 7 Tagen erfüllt hat, bleibt gleich. „Zu schwer“ senkt trotzdem.
+  - Ab etwa 30 Minuten geschätzter Dauer pausiert die Steigerung. Die Schätzung bleibt intern (Wiederholungen mal Sekunden der Übung, Minuten, Kilometer mal 6 Minuten). Die App rät dann zum Prompt für schwerere Varianten.
+  - Der Faktor wirkt auf die Ziele des letzten selbst gespeicherten Plans, damit auch kleine Ziele wachsen. Ein selbst gespeicherter Plan setzt den Faktor auf 1 zurück. Hat jemand für Montag schon selbst einen Plan gespeichert, entfällt die Steigerung.
+  - Erste Steigerung am Mo 19.10.2026, letzte am Mo 26.04.2027. Untergrenze ist die Hälfte des Ausgangsplans.
+  - Am Montag zeigt die App „QUEST UPGRADED“ oder „QUEST ADJUSTED“ mit Prozent. Im Feed erscheint nichts.
+- **Bewertung:** Nur der Hunter selbst sieht sie. Sonntags erscheint auf der Quest-Seite ein Check-in, bis bewertet ist. Auf der Plan-Seite geht es jederzeit, mit Vorschau auf den nächsten Montag.
+- **Plan-Coach:** Auf der Plan-Seite erzeugt die App jederzeit einen Prompt mit aktuellem Plan, Bewertung, Verlauf der letzten 14 Tage und eigenen Hinweisen. Vorgaben im Prompt sind 15 bis 30 Minuten pro Tag, ohne Geräte, nebenbei machbar, progressiv und ab 30 Minuten schwerere Varianten statt mehr Wiederholungen. Kopieren oder per Teilen-Menü direkt an die KI-App schicken, Antwort wie beim Import einfügen.
+- **Installation:** Der Browser bietet die Installation nur einmal beim Laden an. Die App fängt das global ab. Auf der Quest-Seite erscheint am Handy ein ausblendbarer Hinweis mit Button (Android) oder Anleitung (iPhone). Das Manifest hat App-ID, Screenshots für den Installationsdialog und Kurzbefehle (Quest, Trainingsplan, Erfolge). Installation, Push, Teilen und Kopieren gehen nur über HTTPS.

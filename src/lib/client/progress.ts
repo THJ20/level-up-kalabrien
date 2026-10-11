@@ -1,7 +1,7 @@
 import { BADGES, RANKS, type LocalDate, type Rank } from '#lib/domain/index.ts';
 import { dayLabel } from './format';
 
-export type SystemMessageKind = 'quest_complete' | 'level_up' | 'rank_up' | 'badge' | 'warning';
+export type SystemMessageKind = 'quest_complete' | 'level_up' | 'rank_up' | 'badge' | 'warning' | 'quest_upgrade';
 
 export interface SystemMessage {
 	id: string;
@@ -67,6 +67,26 @@ export function progressMessages(before: ProgressSnapshot | null, after: Progres
 		});
 	}
 	return messages;
+}
+
+/** Meldung, wenn der eigene Plan zum Wochenstart automatisch angepasst wurde. */
+export function upgradeMessage(notice: { validFrom: LocalDate; step: number }): SystemMessage {
+	const percent = Math.round(Math.abs(notice.step) * 100);
+	return notice.step >= 0
+		? {
+				id: `upgrade-${notice.validFrom}`,
+				kind: 'quest_upgrade',
+				title: 'QUEST UPGRADED',
+				subtitle: `DAILY QUEST +${percent} %`,
+				body: 'Neue Woche, neues Level. Dein Trainingsplan ist ab heute schwerer.'
+			}
+		: {
+				id: `upgrade-${notice.validFrom}`,
+				kind: 'quest_upgrade',
+				title: 'QUEST ADJUSTED',
+				subtitle: `DAILY QUEST −${percent} %`,
+				body: 'Dein Trainingsplan ist ab heute etwas leichter. Bleib dran, Hunter.'
+			};
 }
 
 /** Warnungen für verpasste Tage anderer Hunter, die noch nicht angezeigt wurden. */

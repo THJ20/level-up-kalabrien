@@ -2,6 +2,7 @@ import { Cron } from 'croner';
 import { TIME_ZONE } from '#lib/domain/index.ts';
 import { dailySnapshot } from './backup';
 import type { ServiceContext } from './context';
+import { applyWeeklyProgression } from './progression';
 import { sendEveningReminders, sendVoteReminders } from './reminders';
 import { evaluateAllHunters } from './votes';
 
@@ -26,7 +27,14 @@ export function startScheduler(
 	};
 	const jobOptions = { timezone: TIME_ZONE, protect: true };
 	const jobs = [
-		new Cron(SCHEDULE.evaluate, jobOptions, guarded('Auswertung', () => evaluateAllHunters(ctx))),
+		new Cron(
+			SCHEDULE.evaluate,
+			jobOptions,
+			guarded('Auswertung', () => {
+				evaluateAllHunters(ctx);
+				applyWeeklyProgression(ctx);
+			})
+		),
 		new Cron(SCHEDULE.eveningReminders, jobOptions, guarded('Abenderinnerung', () => sendEveningReminders(ctx))),
 		new Cron(SCHEDULE.voteReminders, jobOptions, guarded('Abstimmungs-Erinnerung', () => sendVoteReminders(ctx))),
 		new Cron(SCHEDULE.snapshot, jobOptions, guarded('Snapshot', () => dailySnapshot(ctx, options.backupDir)))

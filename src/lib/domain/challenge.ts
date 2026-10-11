@@ -51,6 +51,12 @@ export function isTrackedDay(date: LocalDate): boolean {
 	return isLocalDate(date) && date >= WARMUP_START && date <= CHALLENGE_END;
 }
 
+/** Montag der Kalenderwoche, in der der Tag liegt. */
+export function mondayOf(date: LocalDate): LocalDate {
+	const weekday = (new Date(toUtcMs(date)).getUTCDay() + 6) % 7;
+	return addDays(date, -weekday);
+}
+
 export function challengeDays(): LocalDate[] {
 	return Array.from({ length: CHALLENGE_DAYS }, (_, index) => addDays(CHALLENGE_START, index));
 }

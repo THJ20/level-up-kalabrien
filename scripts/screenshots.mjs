@@ -11,6 +11,7 @@ mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ channel: 'msedge' });
 const problems = [];
 for (const viewport of [
+	{ name: 'klein', width: 360, height: 740, isMobile: true },
 	{ name: 'handy', width: 390, height: 844, isMobile: true },
 	{ name: 'desktop', width: 1280, height: 860, isMobile: false }
 ]) {

@@ -15,7 +15,7 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
 - Code lokal: `C:\Users\TobiasHeinze\Documents\level-up-kalabrien`
 - GitHub privat: https://github.com/THJ20/level-up-kalabrien (Branch `main`)
 - Spezifikation: `docs/specs/2026-10-09-level-up-kalabrien-design.md`, dazu die Überarbeitung `docs/specs/2026-10-10-ueberarbeitung-1-design.md` (gilt vorrangig)
-- Roadmap und Pläne: `docs/plans/` (Roadmap `00`, Pläne `01` bis `04` und `06` erledigt, `05` offen)
+- Roadmap und Pläne: `docs/plans/` (Roadmap `00`, Pläne `01` bis `04`, `06` und `07` erledigt, `05` offen)
 - API-Doku: `docs/api.md`
 - Logo und Avatare von Tobias: `assets/logo`, `assets/avatars`
 - Git-Identität (nur in diesem Repo): Tobias Heinze <heinze.tobias20@gmail.com>
@@ -29,6 +29,9 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
 - Änderungen gelten ab dem nächsten Tag. Solange jemand noch keinen Satz eingetragen hat, gilt sein Plan rückwirkend ab Beginn. Vergangene Tage werden immer am damals gültigen Plan gemessen.
 - Alle sehen die Pläne der anderen im Statusfenster. Eine Änderung steht im Feed.
 - Import über einen Kopier-Prompt für die eigene KI. Die App erkennt die Antwort im Browser (Format `Übung | Ziel | Einheit`, JSON, CSV oder freie Zeilen), ohne eigene KI und ohne API-Key.
+- Jeden Montag steigt der Plan automatisch: zu leicht +10 %, passend +5 % (auch ohne Bewertung), zu schwer −10 %. Unter 5 erfüllten Tagen in der Vorwoche bleibt er gleich. Ab etwa 30 Minuten geschätzter Dauer pausiert die Steigerung. Selbst gespeicherte Pläne setzen die Grundlage neu.
+- Bewertung nur für den Hunter selbst sichtbar. Check-in sonntags auf der Quest-Seite, jederzeit auf der Plan-Seite.
+- Der Plan-Coach erzeugt jederzeit einen Prompt mit aktuellem Plan, Bewertung, Verlauf und Hinweisen (15 bis 30 Minuten, ohne Geräte, progressiv).
 
 **Tage**
 - Zustände: erfüllt, krank, offen (heute), nicht gewertet, verpasst und Aufwärmtag.
@@ -81,7 +84,7 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
   - `src/routes/api` ist die JSON-API, `src/routes/(app)` sind die Seiten (neu: `/plan`, `/erfolge`).
   - `src/lib/ui` und `src/lib/client` gehören zur Oberfläche, `src/service-worker` ist der Service Worker.
   - Farben nur über CSS-Variablen in `src/lib/ui/theme.css`, das Farbschema setzt der Server als `data-theme` am `<html>`.
-- Prüfen: `npm test` (252 Tests), `npx svelte-check --tsconfig ./tsconfig.json`, `npm run build`.
+- Prüfen: `npm test` (271 Tests), `npx svelte-check --tsconfig ./tsconfig.json`, `npm run build`.
 
 ## Lokal starten und testen
 

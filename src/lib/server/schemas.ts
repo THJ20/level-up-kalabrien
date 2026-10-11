@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EFFORTS, PLAN_UNITS, isLocalDate } from '#lib/domain/index.ts';
+import { EFFORTS, PLAN_UNITS, RATINGS, isLocalDate } from '#lib/domain/index.ts';
 import { THEMES } from '../shared/constants';
 import { REACTIONS } from './feed';
 
@@ -27,6 +27,10 @@ export const ProfilePatch = z.object({
 });
 
 export const AvatarPresetBody = z.object({ preset: z.string().max(10) });
+
+export const RatingBody = z.object({ rating: z.enum(RATINGS) });
+
+export const PromptBody = z.object({ notes: z.string().max(500).optional() });
 
 export const SettingsPatch = z.object({
 	pushEnabled: z.boolean().optional(),

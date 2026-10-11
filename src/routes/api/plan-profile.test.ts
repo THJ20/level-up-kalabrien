@@ -10,6 +10,8 @@ import { GET as getPlan, PUT as putPlan } from './plan/+server';
 import { GET as badges } from './badges/+server';
 import { GET as hunter } from './hunters/[id]/+server';
 import { POST as addSet } from './sets/+server';
+import { PUT as ratePlan } from './plan/rating/+server';
+import { POST as planPrompt } from './plan/prompt/+server';
 
 const PASSWORD = 'geheim-genug-123';
 
@@ -128,5 +130,19 @@ describe('Profil-API', () => {
 		expect(overview.body.badges).toHaveLength(28);
 		expect(overview.body.hunters).toHaveLength(2);
 		expect(overview.body.progress['double-dungeon']).toEqual({ current: 0, target: 7, earned: false });
+	});
+});
+
+describe('Bewertung und Prompt', () => {
+	it('speichert die Bewertung und liefert den Prompt', async () => {
+		const { tobias } = await team();
+		const rated = await call(ratePlan, { method: 'PUT', path: '/api/plan/rating', token: tobias.token, body: { rating: 'too_easy' } });
+		expect(rated.body.progression).toMatchObject({ rating: 'too_easy', weekStart: '2026-10-12' });
+		const wrong = await call(ratePlan, { method: 'PUT', path: '/api/plan/rating', token: tobias.token, body: { rating: 'egal' } });
+		expect(wrong.status).toBe(400);
+		const prompt = await call(planPrompt, { method: 'POST', path: '/api/plan/prompt', token: tobias.token, body: { notes: 'Knie' } });
+		expect(prompt.body.prompt).toContain('Hinweise von mir: Knie');
+		const plan = await call(getPlan, { path: '/api/plan', token: tobias.token });
+		expect(plan.body.progression.nextMonday).toBe('2026-10-19');
 	});
 });

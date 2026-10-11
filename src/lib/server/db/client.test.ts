@@ -17,6 +17,7 @@ const TABLES = [
 	'missed_days',
 	'penalties',
 	'plan_items',
+	'plan_ratings',
 	'plans',
 	'push_subscriptions',
 	'quest_sets',
@@ -40,7 +41,7 @@ describe('Datenbank', () => {
 
 		runMigrations(ctx.db.$client, ctx.clock.now());
 		const applied = ctx.db.$client.prepare('SELECT COUNT(*) FROM __migrations').pluck().get();
-		expect(applied).toBe(3);
+		expect(applied).toBe(4);
 	});
 
 	it('spielt den Startkatalog genau einmal ein', () => {

@@ -10,6 +10,7 @@ import { openDatabase } from './db/client';
 import { PushNotifier, webPushTransport, type PushTransport } from './push';
 import { startScheduler } from './scheduler';
 import { ensureStartPlans } from './plans';
+import { applyWeeklyProgression } from './progression';
 import { ensureGoLiveDate } from './settings';
 import { ensureVapidKeys, type VapidKeys } from './vapid';
 import { evaluateAllHunters } from './votes';
@@ -61,6 +62,7 @@ export function createApp(config: AppConfig, deps: AppDeps = {}): App {
 		log(`Admin-Einladung (7 Tage gültig): ${config.origin ?? 'http://localhost:5173'}/register?token=${adminToken}`);
 	}
 	evaluateAllHunters(ctx);
+	applyWeeklyProgression(ctx);
 
 	const stopJobs = deps.startJobs === false ? () => {} : startScheduler(ctx, { backupDir: config.backupDir, log });
 	return {

@@ -5,6 +5,7 @@
 	import { Activity, Award, ChartColumn, Gavel, Swords, Trophy } from '@lucide/svelte';
 	import {
 		progressMessages,
+		upgradeMessage,
 		warningMessages,
 		type ProgressSnapshot,
 		type SystemMessage
@@ -12,6 +13,7 @@
 	import { readJson, writeJson } from '#lib/client/storage.ts';
 	import { offlineQueue } from '#lib/client/queue.svelte.ts';
 	import { serverClock } from '#lib/client/server-clock.svelte.ts';
+	import { watchInstall } from '#lib/client/install.svelte.ts';
 	import Avatar from '#lib/ui/Avatar.svelte';
 	import SystemOverlay from '#lib/ui/SystemOverlay.svelte';
 
@@ -42,9 +44,14 @@
 
 		const seen = readJson<string[]>(seenKey) ?? [];
 		const warnings = warningMessages(data.recentMissed, new Set(seen));
-		writeJson(seenKey, [...seen, ...data.recentMissed.map((notice) => notice.id)].slice(-200));
+		const upgrade = data.planUpgrade ? upgradeMessage(data.planUpgrade) : null;
+		const upgrades = upgrade && !seen.includes(upgrade.id) ? [upgrade] : [];
+		writeJson(
+			seenKey,
+			[...seen, ...data.recentMissed.map((notice) => notice.id), ...upgrades.map((message) => message.id)].slice(-200)
+		);
 
-		const incoming = [...warnings, ...fresh];
+		const incoming = [...warnings, ...upgrades, ...fresh];
 		if (incoming.length === 0) return;
 		untrack(() => {
 			const known = new Set(queue.map((message) => message.id));
@@ -74,6 +81,8 @@
 		const path = page.url.pathname;
 		return href === '/' ? path === '/' : path.startsWith(href);
 	}
+
+	onMount(watchInstall);
 
 	onMount(() => {
 		const flush = async () => {

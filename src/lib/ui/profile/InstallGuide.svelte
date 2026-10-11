@@ -1,43 +1,19 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { installState, promptInstall } from '#lib/client/install.svelte.ts';
 	import Panel from '../Panel.svelte';
 
-	interface InstallPrompt extends Event {
-		prompt(): Promise<void>;
-		userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-	}
-
-	let installed = $state(false);
-	let platform = $state<'ios' | 'android' | 'desktop'>('desktop');
-	let prompt = $state<InstallPrompt | null>(null);
-
-	onMount(() => {
-		const nav = navigator as Navigator & { standalone?: boolean };
-		installed = window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true;
-		platform = /iphone|ipad|ipod/i.test(navigator.userAgent) ? 'ios' : /android/i.test(navigator.userAgent) ? 'android' : 'desktop';
-		const capture = (event: Event) => {
-			event.preventDefault();
-			prompt = event as InstallPrompt;
-		};
-		window.addEventListener('beforeinstallprompt', capture);
-		return () => window.removeEventListener('beforeinstallprompt', capture);
-	});
-
-	async function install() {
-		if (!prompt) return;
-		await prompt.prompt();
-		const choice = await prompt.userChoice;
-		if (choice.outcome === 'accepted') installed = true;
-		prompt = null;
-	}
+	const platform = $derived(installState.platform);
 </script>
 
 <Panel title="App installieren">
-	{#if installed}
+	{#if installState.standalone}
 		<p>Läuft schon als App. Stark.</p>
 	{:else}
-		{#if prompt}
-			<button class="btn btn-primary" type="button" onclick={install}>Jetzt installieren</button>
+		{#if !installState.secure}
+			<p class="hint">Installieren geht erst, wenn die App über HTTPS läuft, also auf dem Server.</p>
+		{/if}
+		{#if installState.prompt}
+			<button class="btn btn-primary" type="button" onclick={promptInstall}>Jetzt installieren</button>
 		{/if}
 		<div class="guides">
 			<section class:current={platform === 'ios'}>

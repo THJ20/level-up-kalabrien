@@ -1,26 +1,56 @@
 <script lang="ts">
-	import { Check, ClipboardCopy, FileUp, Sparkles, Wand } from '@lucide/svelte';
+	import { Check, ClipboardCopy, FileUp, Share2, Sparkles, Wand } from '@lucide/svelte';
 	import { PLAN_IMPORT_PROMPT, UNIT_LABELS, parsePlanText } from '#lib/domain/index.ts';
+	import { apiFetch, errorMessage } from '#lib/client/api.ts';
 	import { decimal } from '#lib/client/format.ts';
+	import Segmented from '../Segmented.svelte';
 	import { rowsFromImport, type CatalogExercise, type DraftRow } from './draft';
 
 	let { exercises, onApply }: { exercises: CatalogExercise[]; onApply: (rows: DraftRow[]) => void } = $props();
 
 	const MAX_FILE_BYTES = 200_000;
 
+	type Mode = 'coach' | 'convert';
+	let mode = $state<Mode>('coach');
+	let notes = $state('');
+	let coachText = $state('');
+	let loadingPrompt = $state(false);
 	let text = $state('');
 	let copied = $state(false);
 	let error = $state('');
 	let preview = $state<{ rows: DraftRow[]; skipped: string[] } | null>(null);
 
+	const prompt = $derived(mode === 'convert' ? PLAN_IMPORT_PROMPT : coachText);
+	const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+	async function makePrompt() {
+		loadingPrompt = true;
+		error = '';
+		try {
+			coachText = (await apiFetch<{ prompt: string }>('/api/plan/prompt', { body: { notes } })).prompt;
+		} catch (caught) {
+			error = errorMessage(caught);
+		} finally {
+			loadingPrompt = false;
+		}
+	}
+
 	async function copyPrompt() {
 		error = '';
 		try {
-			await navigator.clipboard.writeText(PLAN_IMPORT_PROMPT);
+			await navigator.clipboard.writeText(prompt);
 			copied = true;
 			setTimeout(() => (copied = false), 2500);
 		} catch {
-			error = 'Kopieren hat nicht geklappt. Markier den Prompt unten und kopier ihn von Hand.';
+			error = 'Kopieren geht hier nicht. Markier den Prompt im Feld und kopier ihn von Hand.';
+		}
+	}
+
+	async function sharePrompt() {
+		try {
+			await navigator.share({ text: prompt });
+		} catch {
+			// Abgebrochen oder nicht möglich, dann bleibt Kopieren.
 		}
 	}
 
@@ -61,21 +91,53 @@
 	}
 </script>
 
+<div class="mode">
+	<Segmented
+		label="Art des Prompts"
+		bind:value={mode}
+		options={[
+			{ value: 'coach', label: 'Plan steigern lassen' },
+			{ value: 'convert', label: 'Eigenen Plan umwandeln' }
+		]}
+	/>
+</div>
+
 <ol class="steps">
 	<li>
-		<p><b>Prompt kopieren.</b> Er sagt deiner KI, in welchem Format sie deinen Plan liefern soll.</p>
-		<button class="btn" type="button" onclick={copyPrompt}>
-			{#if copied}<Check size={18} /> Kopiert{:else}<ClipboardCopy size={18} /> Prompt kopieren{/if}
-		</button>
-		<details class="prompt">
-			<summary>Prompt ansehen</summary>
-			<pre>{PLAN_IMPORT_PROMPT}</pre>
-		</details>
+		{#if mode === 'coach'}
+			<p>
+				<b>Prompt erzeugen.</b> Er enthält deinen aktuellen Plan, deine Bewertung und deine letzten zwei Wochen.
+				Die KI macht daraus einen fordernderen Plan für 15 bis 30 Minuten am Tag, ohne Geräte.
+			</p>
+			<label class="field">
+				<span>Hinweise an die KI (optional)</span>
+				<input class="input" maxlength="500" placeholder="z. B. Knie schonen, mehr Rumpf" bind:value={notes} />
+			</label>
+			<button class="btn" type="button" disabled={loadingPrompt} onclick={makePrompt}>
+				<Wand size={18} /> {coachText ? 'Prompt neu erzeugen' : 'Prompt erzeugen'}
+			</button>
+		{:else}
+			<p><b>Prompt nehmen.</b> Er wandelt einen Plan, den du schon hast, ins Format der App um.</p>
+		{/if}
+		{#if prompt}
+			<label class="field prompt">
+				<span class="visually-hidden">Prompt</span>
+				<textarea class="input" rows="8" readonly value={prompt} onfocus={(event) => event.currentTarget.select()}></textarea>
+			</label>
+			<div class="actions">
+				<button class="btn btn-primary" type="button" onclick={copyPrompt}>
+					{#if copied}<Check size={18} /> Kopiert{:else}<ClipboardCopy size={18} /> Kopieren{/if}
+				</button>
+				{#if canShare}
+					<button class="btn" type="button" onclick={sharePrompt}><Share2 size={18} /> An KI-App senden</button>
+				{/if}
+			</div>
+		{/if}
 	</li>
 	<li>
 		<p>
-			<b>Bei deiner KI einfügen</b>, zum Beispiel Claude oder ChatGPT, und deinen Plan dazugeben: als Datei, Foto
-			oder Text.
+			<b>Bei deiner KI einfügen</b>, zum Beispiel Claude oder ChatGPT.
+			{#if mode === 'convert'}Gib deinen Plan dazu, als Datei, Foto oder Text.{/if}
 		</p>
 	</li>
 	<li>
@@ -150,26 +212,22 @@
 		font-size: 15px;
 	}
 
+	.mode {
+		margin-bottom: 14px;
+	}
+
 	.prompt {
-		margin-top: 8px;
-		font-size: 14px;
+		margin-top: 10px;
+	}
+
+	.prompt textarea {
+		font-family: var(--f-body);
+		font-size: 13px;
 		color: var(--dim);
 	}
 
-	.prompt summary {
-		cursor: pointer;
-	}
-
-	pre {
-		margin: 8px 0 0;
-		padding: 10px;
-		max-height: 260px;
-		overflow: auto;
-		white-space: pre-wrap;
-		border: 1px solid var(--line-faint);
-		background: rgba(var(--deep-rgb), 0.6);
-		font-size: 13px;
-		color: var(--text);
+	.field + .btn {
+		margin-top: 8px;
 	}
 
 	textarea {

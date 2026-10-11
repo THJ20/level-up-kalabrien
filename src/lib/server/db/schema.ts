@@ -93,6 +93,10 @@ export const plans = sqliteTable(
 		validFrom: text('valid_from').notNull(),
 		/** Vom System angelegter Startplan, nicht vom Hunter gespeichert. */
 		isDefault: flag('is_default').notNull().default(false),
+		/** Automatische Wochensteigerung, nicht vom Hunter gespeichert. */
+		auto: flag('auto').notNull().default(false),
+		/** Steigerung gegenüber dem letzten selbst gespeicherten Plan, 1 = unverändert. */
+		factor: real('factor').notNull().default(1),
 		createdAt: timestamp('created_at').notNull()
 	},
 	(table) => [uniqueIndex('plans_hunter_valid_from').on(table.hunterId, table.validFrom)]
@@ -109,9 +113,26 @@ export const planItems = sqliteTable(
 			.notNull()
 			.references(() => exercises.id),
 		unit: text('unit', { enum: ['reps', 'minutes', 'km'] }).notNull(),
-		target: real('target').notNull()
+		target: real('target').notNull(),
+		/** Ziel im letzten selbst gespeicherten Plan, Grundlage der Steigerung. */
+		baseTarget: real('base_target')
 	},
 	(table) => [primaryKey({ columns: [table.planId, table.position] })]
+);
+
+/** Wochenbewertung des eigenen Plans. Nur der Hunter selbst sieht sie. */
+export const planRatings = sqliteTable(
+	'plan_ratings',
+	{
+		hunterId: text('hunter_id')
+			.notNull()
+			.references(() => hunters.id),
+		/** Montag der bewerteten Woche. */
+		weekStart: text('week_start').notNull(),
+		rating: text('rating', { enum: ['too_easy', 'right', 'too_hard'] }).notNull(),
+		createdAt: timestamp('created_at').notNull()
+	},
+	(table) => [primaryKey({ columns: [table.hunterId, table.weekStart] })]
 );
 
 export const sickNotes = sqliteTable(

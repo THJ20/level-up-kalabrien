@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { progressMessages, warningMessages, type ProgressSnapshot } from './progress';
+import { progressMessages, upgradeMessage, warningMessages, type ProgressSnapshot } from './progress';
 
 const base: ProgressSnapshot = { quests: 4, level: 5, rank: 'E', badges: ['awakened'] };
 
@@ -43,5 +43,19 @@ describe('Warnungen', () => {
 		expect(messages).toHaveLength(1);
 		expect(messages[0]).toMatchObject({ kind: 'warning', title: 'WARNING', id: 'warning-b' });
 		expect(messages[0].body).toContain('Ramzy');
+	});
+});
+
+describe('Planänderung zum Wochenstart', () => {
+	it('meldet Steigerung und Erleichterung mit Prozent', () => {
+		expect(upgradeMessage({ validFrom: '2026-10-19', step: 0.05 })).toMatchObject({
+			id: 'upgrade-2026-10-19',
+			title: 'QUEST UPGRADED',
+			subtitle: 'DAILY QUEST +5 %'
+		});
+		expect(upgradeMessage({ validFrom: '2026-10-26', step: -0.1 })).toMatchObject({
+			title: 'QUEST ADJUSTED',
+			subtitle: 'DAILY QUEST −10 %'
+		});
 	});
 });

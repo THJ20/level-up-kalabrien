@@ -84,6 +84,13 @@ function hasLetters(text: string): boolean {
 	return /\p{L}/u.test(text);
 }
 
+/** Übungsnamen haben 2 bis 40 Zeichen. Längere Zeilen sind Fließtext, keine Übung. */
+const MAX_NAME_LENGTH = 40;
+
+function plausibleName(name: string): boolean {
+	return name.length >= 2 && name.length <= MAX_NAME_LENGTH && hasLetters(name);
+}
+
 /** Zeile im Format „Übung | Ziel | Einheit“ (auch mit ; oder Tab, oder als Markdown-Tabelle). */
 function parseCells(cells: string[]): ImportedItem | null {
 	const parts = cells.map((cell) => cell.trim()).filter((cell) => cell.length > 0);
@@ -94,7 +101,7 @@ function parseCells(cells: string[]): ImportedItem | null {
 	const quantity = parseQuantity(rest);
 	if (!quantity) return null;
 	const name = cleanName(parts[nameIndex]);
-	return name ? { name, ...quantity } : null;
+	return plausibleName(name) ? { name, ...quantity } : null;
 }
 
 const SETS_TIMES = /(\d+)\s*[x×*]\s*(\d+(?:[.,]\d+)?)\s*([\p{L}.]+)?/u;
@@ -127,7 +134,7 @@ function parseFree(line: string): ImportedItem | null {
 	const trailing = sets ? sets[3] : single?.[2];
 	if (trailing && unitOf(trailing) === null) removed = removed.slice(0, removed.length - trailing.length);
 	const name = cleanName(line.replace(removed, ' '));
-	return name && hasLetters(name) ? { name, ...quantity } : null;
+	return plausibleName(name) ? { name, ...quantity } : null;
 }
 
 function stripLine(line: string): string {

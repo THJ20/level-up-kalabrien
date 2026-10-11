@@ -9,6 +9,7 @@ Der Look ist an das System-Interface eines Dark-Fantasy-Manhwas angelehnt (Varia
 ## Was die App kann
 
 - **Eigener Trainingsplan** pro Spieler, jeden Tag gleich, mit Übungen in Wiederholungen, Minuten oder Kilometern. Import über einen Prompt für die eigene KI, Erkennung direkt im Browser
+- **Wöchentliche Steigerung:** Jeden Montag wird der Plan nach der eigenen Bewertung schwerer (+5 % oder +10 %) oder leichter, bis etwa 30 Minuten am Tag. Check-in am Sonntag, KI-Prompt für schwerere Varianten
 - **Daily Quest** nach dem Plan, Einträge in Einzelsätzen, Nachtragen vergangener Tage und Krankmeldung, drei Aufwärmtage ohne Wertung
 - **Level und Rang** von E bis S, 100 XP pro erfülltem Tag, Statusfenster für jeden Spieler
 - **Zusatzübungen** aus einem gemeinsamen Katalog. Sie geben Bonuspunkte nach Dauer mal Anstrengung, als eigene Wertung neben dem Level
@@ -19,7 +20,7 @@ Der Look ist an das System-Interface eines Dark-Fantasy-Manhwas angelehnt (Varia
 - **28 Badges** in fünf Gruppen mit eigenen Icons und einer Erfolge-Seite, auf der man auch die Badges der anderen sieht
 - **Profil** mit Spielername, Profilbild (eigenes Foto oder einer von acht Avataren) und zwei Farbschemata (Shadow Monarch violett, Gate orange)
 - **Push-Benachrichtigungen** für die Abenderinnerung und offene Abstimmungen, einzeln abschaltbar
-- **Installierbar als App** (PWA) auf iPhone, Android und Desktop. Einträge ohne Netz werden gesammelt und später gesendet
+- **Installierbar als App** (PWA) auf iPhone, Android und Desktop, mit Installations-Button und Kurzbefehlen. Einträge ohne Netz werden gesammelt und später gesendet
 - **Login nur per Einladung**, Verwaltung der Spieler durch den Admin
 
 ## Stand
@@ -86,7 +87,7 @@ In PowerShell setzt man die Variablen vorher mit `$env:DATABASE_PATH='data/dev.d
 | `DATABASE_PATH` | Pfad zur SQLite-Datei | `data/app.db` |
 | `BACKUP_DIR` | Ordner für die nächtlichen Backups | `backups` neben der Datenbank |
 | `GO_LIVE_DATE` | Erster gewerteter Tag im Format `JJJJ-MM-TT` | keiner |
-| `ORIGIN` | Öffentliche Adresse der App, z. B. `https://levelup.example.de` | keiner |
+| `ORIGIN` | Öffentliche Adresse der App, z. B. `https://levelup.example.de`. Muss schon beim Bauen gesetzt sein, der Node-Adapter liest sie nur dann | keiner (HTTPS mit Host aus der Anfrage) |
 | `PORT` | Port des Node-Servers | `3000` |
 | `VAPID_SUBJECT` | Kontakt für Web Push | `ORIGIN` |
 | `AVATAR_DIR` | Ordner für hochgeladene Profilbilder | `avatars` neben der Datenbank |

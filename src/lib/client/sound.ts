@@ -7,7 +7,8 @@ const MELODIES: Record<SystemMessageKind, number[]> = {
 	level_up: [392, 523.25, 659.25, 1046.5],
 	rank_up: [261.63, 392, 523.25, 783.99, 1046.5],
 	badge: [659.25, 987.77],
-	warning: [220, 174.61]
+	warning: [220, 174.61],
+	quest_upgrade: [440, 554.37, 659.25, 880]
 };
 
 /** Kurzer synthetischer Ton zur System-Meldung. Scheitert still, wenn der Browser Audio blockiert. */

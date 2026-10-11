@@ -1,4 +1,4 @@
-import { WARMUP_START, addDays, type DayStatus, type LocalDate, type PlanUnit } from '#lib/domain/index.ts';
+import { WARMUP_START, addDays, mondayOf, type DayStatus, type LocalDate, type PlanUnit } from '#lib/domain/index.ts';
 
 /** Kennzahl im Diagramm. Planerfüllung ist zwischen Spielern mit verschiedenen Plänen vergleichbar. */
 export type Metric = 'progress' | 'reps' | 'minutes' | 'bonus';
@@ -58,10 +58,7 @@ function toUtc(date: LocalDate): Date {
 }
 
 /** Montag der Woche, in der der Tag liegt. */
-export function weekStart(date: LocalDate): LocalDate {
-	const weekday = (toUtc(date).getUTCDay() + 6) % 7;
-	return addDays(date, -weekday);
-}
+export const weekStart = mondayOf;
 
 /** ISO-Kalenderwoche (Woche mit dem ersten Donnerstag ist KW 1). */
 export function isoWeek(date: LocalDate): number {

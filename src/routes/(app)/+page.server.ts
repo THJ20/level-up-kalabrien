@@ -4,6 +4,7 @@ import { getApp } from '#lib/server/app.ts';
 import { listExercises } from '#lib/server/bonus.ts';
 import { listFeed } from '#lib/server/feed.ts';
 import { dayDetail, hunterSummary, todayBoard } from '#lib/server/overview.ts';
+import { progressionOverview } from '#lib/server/progression.ts';
 import { hunterTimeline } from '#lib/server/records.ts';
 import type { PageServerLoad } from './$types';
 
@@ -24,6 +25,7 @@ export const load: PageServerLoad = ({ locals, url, depends }) => {
 		detail: isTrackedDay(date) ? dayDetail(ctx, me.id, date) : null,
 		calendar: hunterTimeline(ctx, me.id).map((day) => ({ date: day.date, status: day.status })),
 		board: todayBoard(ctx),
+		progression: progressionOverview(ctx, me.id),
 		exercises: listExercises(ctx),
 		feed: listFeed(ctx, me.id, { limit: 6 })
 	};

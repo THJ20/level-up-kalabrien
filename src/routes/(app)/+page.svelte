@@ -5,7 +5,9 @@
 	import DayNav from '#lib/ui/quest/DayNav.svelte';
 	import HunterCard from '#lib/ui/quest/HunterCard.svelte';
 	import QuestPanel from '#lib/ui/quest/QuestPanel.svelte';
+	import RatingPanel from '#lib/ui/plan/RatingPanel.svelte';
 	import FeedEntry from '#lib/ui/FeedEntry.svelte';
+	import InstallBanner from '#lib/ui/InstallBanner.svelte';
 	import Panel from '#lib/ui/Panel.svelte';
 	import { serverNow } from '#lib/client/server-clock.svelte.ts';
 
@@ -21,6 +23,7 @@
 <svelte:head><title>Quest · Level Up</title></svelte:head>
 
 <div class="page">
+	<InstallBanner />
 	<div class="top">
 		<CountdownHero daysLeft={data.summary.daysUntilDeparture} dayNumber={data.summary.dayNumber} today={data.summary.today} />
 		<HunterCard
@@ -36,6 +39,13 @@
 	{#if data.detail}
 		<div class="columns">
 			<div class="main">
+				{#if data.progression.checkinDue && data.isToday}
+					<RatingPanel
+						progression={data.progression}
+						title="Wöchentlicher Check-in"
+						intro="Die Woche ist fast rum. Wie war dein Trainingsplan? Danach richtet sich, wie stark er ab Montag steigt. Nur du siehst deine Antwort."
+					/>
+				{/if}
 				<DayNav date={data.date} today={data.summary.today} calendar={data.calendar} />
 				{#key data.date}
 					<QuestPanel date={data.date} isToday={data.isToday} day={data.detail.day} sets={data.detail.sets} />

@@ -8,6 +8,7 @@
 	import Panel from '#lib/ui/Panel.svelte';
 	import PlanEditor from '#lib/ui/plan/PlanEditor.svelte';
 	import PlanImport from '#lib/ui/plan/PlanImport.svelte';
+	import RatingPanel from '#lib/ui/plan/RatingPanel.svelte';
 	import { draftError, rowsFromPlan, toPayload, type DraftRow } from '#lib/ui/plan/draft.ts';
 
 	let { data } = $props();
@@ -71,7 +72,8 @@
 <div class="page">
 	<h1 class="sys">Trainingsplan</h1>
 	<p class="intro">
-		Dein Plan ist deine Daily Quest. Er gilt jeden Tag gleich. Alle anderen sehen ihn in deinem Statusfenster.
+		Dein Plan ist deine Daily Quest. Er gilt jeden Tag gleich und wird jeden Montag ein Stück schwerer. Alle anderen
+		sehen ihn in deinem Statusfenster.
 	</p>
 
 	<div class="columns">
@@ -92,6 +94,8 @@
 				{/if}
 			</Panel>
 
+			<RatingPanel progression={data.progression} />
+
 			<Panel title="Plan bearbeiten">
 				<PlanEditor bind:rows exercises={data.exercises} />
 				<div class="save">
@@ -99,12 +103,12 @@
 						{#if retroactive}
 							Du hast noch nichts eingetragen. Dein Plan gilt deshalb sofort, auch für alle Tage seit dem 09.10.
 						{:else}
-							Änderungen gelten ab {dayLabel(data.plan.nextStart)}. Die heutige Quest bleibt, wie sie ist.
+							Änderungen gelten ab {dayLabel(data.plan.nextStart)} Die heutige Quest bleibt, wie sie ist.
 						{/if}
 					</p>
 					{#if error}<p class="form-error" role="alert">{error}</p>{/if}
 					{#if savedFor && !dirty && !busy}
-						<p class="saved" role="status">Gespeichert. {savedFor === WARMUP_START ? 'Gilt ab sofort.' : `Gilt ab ${dayLabel(savedFor)}.`}</p>
+						<p class="saved" role="status">Gespeichert. {savedFor === WARMUP_START ? 'Gilt ab sofort.' : `Gilt ab ${dayLabel(savedFor)}`}</p>
 					{/if}
 					<div class="buttons">
 						<button class="btn btn-primary" type="button" disabled={busy || !dirty} onclick={save}>Plan speichern</button>
@@ -114,7 +118,7 @@
 			</Panel>
 		</div>
 
-		<Panel title="Plan importieren">
+		<Panel title="Plan mit KI anpassen">
 			<PlanImport exercises={data.exercises} onApply={(imported) => edit(imported)} />
 		</Panel>
 	</div>
