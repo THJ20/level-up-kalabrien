@@ -87,6 +87,8 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
 
 1. `npm run build`
 2. Starten mit `DATABASE_PATH=data/dev.db`, `PORT=5180` und `ORIGIN=http://localhost:5180`, dann `node build/index.js`. Beim allerersten Start steht ein Admin-Einladungslink im Log.
+   - Wichtig: Der Node-Adapter von SvelteKit 3 liest `ORIGIN` nur beim Bauen (`paths.origin` in `vite.config.ts`). Ohne Angabe nimmt er HTTPS mit dem Host aus der Anfrage an, das passt hinter Caddy. Für einen Test ohne HTTPS muss `ORIGIN` schon bei `npm run build` gesetzt sein.
+   - Handy im selben WLAN: mit `ORIGIN=http://<IP des Rechners>:5180` bauen und starten. Ohne HTTPS gehen Login und Einträge, aber kein Push, keine Installation als App und kein Kopieren in die Zwischenablage.
 3. Für einen Stand mitten in der Challenge zusätzlich `SIMULATED_NOW=2026-10-20T19:00:00+02:00` und `GO_LIVE_DATE=2026-10-12` setzen.
 4. Testdaten anlegen: `node scripts/seed-dev.mjs <Admin-Token> <URL>` legt Tobias (Admin), Niklas, Ramzy und Steffen mit Plänen, Avataren und Einträgen an. Das Testpasswort steht im Skript.
 5. `node scripts/dev-vote.mjs <URL>` erzeugt eine offene Abstimmung zum Ansehen.

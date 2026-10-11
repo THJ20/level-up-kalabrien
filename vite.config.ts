@@ -5,7 +5,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [
 		sveltekit({
-			adapter: adapter()
+			adapter: adapter(),
+			// Öffentliche Adresse der App. Der Node-Adapter liest sie nur beim Bauen, nicht beim Start.
+			// Ohne Angabe gilt HTTPS mit dem Host aus der Anfrage (passt hinter einem HTTPS-Proxy).
+			paths: { origin: process.env.ORIGIN || undefined }
 		})
 	],
 	test: {

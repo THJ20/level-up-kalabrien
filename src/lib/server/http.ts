@@ -68,6 +68,8 @@ export function setSessionCookie(event: RequestEvent, session: SessionToken): vo
 		path: '/',
 		httpOnly: true,
 		sameSite: 'lax',
+		// Im Betrieb immer HTTPS. Ohne HTTPS (Test im WLAN) würde der Browser ein Secure-Cookie verwerfen.
+		secure: event.url.protocol === 'https:',
 		expires: session.expiresAt
 	});
 }
