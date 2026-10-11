@@ -120,4 +120,4 @@ Stand 11.10.2026. Dieses Dokument reicht, um in einer neuen Session ohne Vorwiss
   7. ~~GitHub-Account für den Repo-Zugriff~~ erledigt, Niklas hat Zugriff auf das Repo (11.10.2026)
 - Push-Benachrichtigungen und der Offline-Modus lassen sich erst auf echten Handys mit HTTPS testen.
 - Die Challenge startet am 12.10.2026, die App läuft dann aber noch nicht auf dem Server. Alle tragen ihre Tage bis zum Go-live nach, das zählt voll.
-- In der Git-Historie stehen in alten Commits noch Pfade mit Bezug zu Firmenwerkzeugen. Umschreiben (Force-Push) nur nach ausdrücklichem Ja.
+- Git-Historie am 11.10.2026 bereinigt (Force-Push mit Freigabe von Tobias), sie enthält keine Bezüge zum Arbeitgeber oder zu Firmenwerkzeugen mehr.
